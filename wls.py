@@ -24,7 +24,6 @@ def wls(
     df: Union[SparkDF, pd.DataFrame],
     dependent_var: str,
     independent_vars: Sequence[str],
-    weights_col: str = 'weights',
     engine: str = 'numpy',
 ):
     """Perform weighted least squares regression.
@@ -52,8 +51,7 @@ def wls(
         fit.
 
     """
-    args = (df, dependent_var, independent_vars, weights_col)
-    return globals()[f'wls_{engine}'](*args)
+    return globals()[f'wls_{engine}'](df, dependent_var, independent_vars)
 
 def wls_numpy(
     df: pd.DataFrame,

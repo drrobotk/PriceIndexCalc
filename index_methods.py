@@ -35,6 +35,7 @@ def bilateral_methods(
     product_id_col: str='id',
     groups: Optional[Sequence[str]] = None,
     method: str = 'tornqvist',
+    base_month: int = 1,
     plot: bool = False,
 ) -> pd.DataFrame:
     """
@@ -60,9 +61,11 @@ def bilateral_methods(
         Options: {'carli', 'jevons', 'dutot', 'laspeyres', 'paasche',
         'geom_laspeyres', 'geom_paasche', 'drobish', 'marshall_edgeworth',
         'palgrave', 'fisher', 'tornqvist', 'walsh', 'sato_vartia',
-        'geary_khamis_b', 'rothwell'}
+        'geary_khamis_b', 'tpd', 'rothwell'}
 
         The bilateral method to use.
+    base_month: int, defaults to 1
+        Integer specifying the base month.
     plot: bool, defaults to False
         Boolean parameter on whether to plot the resulting timeseries for price
         indices.
@@ -78,7 +81,7 @@ def bilateral_methods(
         'carli', 'jevons', 'dutot', 'laspeyres',
         'paasche', 'geom_laspeyres', 'geom_paasche', 'drobish',
         'marshall_edgeworth', 'palgrave', 'fisher', 'tornqvist',
-        'walsh', 'sato_vartia', 'geary_khamis_b', 'rothwell'
+        'walsh', 'sato_vartia', 'geary_khamis_b', 'tpd', 'rothwell'
     }
 
     if method not in valid_bilateral_methods:
@@ -102,44 +105,58 @@ def bilateral_methods(
 
     periods = df[date_col].unique()
     no_of_periods = len(periods)
-    func = globals()[method]
 
     index_vals = np.zeros(no_of_periods)
 
+    if method != 'tpd':
+        # Obtain bilateral function for bilateral method.
+        func = globals()[method]
+
     for i in range(no_of_periods):
-        df_base = df.loc[df[date_col] == periods[0]]
+        df_base = df.loc[df[date_col] == periods[base_month-1]]
         df_curr = df.loc[df[date_col] == periods[i]]
 
         # Make sure the sample is matched for given periods.
         df_base = df_base[df_base[product_id_col].isin(df_curr[product_id_col])]
         df_curr = df_curr[df_curr[product_id_col].isin(df_base[product_id_col])]
 
-        # Find price and quantity vectors of base period and current period.
-        p_base = df_base[price_col].to_numpy()
-        p_curr = df_curr[price_col].to_numpy()
-        data = (p_base, p_curr)
+        if method == 'tpd':
+            # Use multilateral TPD method with two periods.
+            df_matched = (
+                pd.concat([df_base, df_curr])
+                .drop_duplicates()
+            )
+            # Recalculate weights for matched df.
+            df_matched = weights_calc(df_matched)
+            # Append values to upper triangular of matrix.
+            index_vals[i] = time_dummy(df_matched)[-1]
+        else:
+            # Find price and quantity vectors of base period and current period.
+            p_base = df_base[price_col].to_numpy()
+            p_curr = df_curr[price_col].to_numpy()
+            data = (p_base, p_curr)
 
-        # Get quantities for bilateral methods that use this information.
-        if method in {
-            'laspeyres', 'drobish', 'marshall_edgeworth',
-            'geom_laspeyres', 'tornqvist', 'fisher',
-            'walsh', 'sato_vartia', 'geary_khamis_b', 
-            'rothwell'
-        }:
-            q_base = df_base[quantity_col].to_numpy()
-            data += (q_base, )
-        if method in {
-            'paasche', 'drobish','palgrave',
-            'marshall_edgeworth', 'geom_paasche', 'tornqvist',
-            'fisher', 'walsh', 'sato_vartia',
-            'geary_khamis_b'
-        }:
-            q_curr = df_curr[quantity_col].to_numpy()
-            data += (q_curr, )
+            # Get quantities for bilateral methods that use this information.
+            if method in {
+                'laspeyres', 'drobish', 'marshall_edgeworth',
+                'geom_laspeyres', 'tornqvist', 'fisher',
+                'walsh', 'sato_vartia', 'geary_khamis_b', 
+                'rothwell'
+            }:
+                q_base = df_base[quantity_col].to_numpy()
+                data += (q_base, )
+            if method in {
+                'paasche', 'drobish','palgrave',
+                'marshall_edgeworth', 'geom_paasche', 'tornqvist',
+                'fisher', 'walsh', 'sato_vartia',
+                'geary_khamis_b'
+            }:
+                q_curr = df_curr[quantity_col].to_numpy()
+                data += (q_curr, )
 
-        # Determine the bilaterals for each base and current period and
-        # append to upper tringular of matrix.
-        index_vals[i] = func(*data)
+            # Determine the bilaterals for each base and current period and
+            # append to upper tringular of matrix.
+            index_vals[i] = func(*data)
 
     output_df = (
         pd.DataFrame(
