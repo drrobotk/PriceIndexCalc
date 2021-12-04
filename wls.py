@@ -55,29 +55,6 @@ def wls(
     args = (df, dependent_var, independent_vars, weights_col)
     return globals()[f'wls_{engine}'](*args)
 
-def _get_vars(
-    df: pd.DataFrame,
-    dependent_var: str,
-    independent_vars: Sequence[str],
-):
-    # Split the categoerical and numerical vars.
-    categorical_vars, numerical_vars = _vars_split(df[independent_vars[1:]])
-
-    # Convert categorical variables to dummy.
-    df_dummy = pd.get_dummies(
-        df,
-        columns=[independent_vars[0], *categorical_vars],
-        drop_first=True
-    )
-
-    # Create a column with all values equal to 1 for the constant term in the regression.
-    df_dummy['const'] = 1
-
-    # Determine the independent variables.
-    vars = df_dummy.columns.difference(df.columns).tolist() + numerical_vars
-
-    return df_dummy[vars], df_dummy[dependent_var], df_dummy['weights']
-
 def wls_numpy(
     df: pd.DataFrame,
     dependent_var: str,
@@ -163,3 +140,26 @@ def wls_pyspark(
         weightCol='weights',
     )
     return wls_model.fit(model_df)
+
+def _get_vars(
+    df: pd.DataFrame,
+    dependent_var: str,
+    independent_vars: Sequence[str],
+):
+    # Split the categoerical and numerical vars.
+    categorical_vars, numerical_vars = _vars_split(df[independent_vars[1:]])
+
+    # Convert categorical variables to dummy.
+    df_dummy = pd.get_dummies(
+        df,
+        columns=[independent_vars[0], *categorical_vars],
+        drop_first=True
+    )
+
+    # Create a column with all values equal to 1 for the constant term in the regression.
+    df_dummy['const'] = 1
+
+    # Determine the independent variables.
+    vars = df_dummy.columns.difference(df.columns).tolist() + numerical_vars
+
+    return df_dummy[vars], df_dummy[dependent_var], df_dummy['weights']
