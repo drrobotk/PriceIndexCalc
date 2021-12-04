@@ -60,7 +60,7 @@ def bilateral_methods(
         Options: {'carli', 'jevons', 'dutot', 'laspeyres', 'paasche',
         'geom_laspeyres', 'geom_paasche', 'drobish', 'marshall_edgeworth',
         'palgrave', 'fisher', 'tornqvist', 'walsh', 'sato_vartia',
-        'geary_khamis_b', 'tpd', 'rothwell'}
+        'geary_khamis_b', 'rothwell'}
 
         The bilateral method to use.
     plot: bool, defaults to False
