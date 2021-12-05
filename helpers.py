@@ -11,7 +11,7 @@ def diag(
     """Convert df to diagonal matrix."""
     return pd.DataFrame(np.diag(df), index=df.index)
 
-def weights_calc(
+def _weights_calc(
     df: pd.DataFrame, 
     price_col: str='price',
     quantity_col: str='quantity',

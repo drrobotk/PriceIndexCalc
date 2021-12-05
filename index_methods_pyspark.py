@@ -8,15 +8,12 @@ Provides the following function:
 from typing import Sequence, List, Optional
 
 import pandas as pd
-import numpy as np
 from pyspark.sql import (
     DataFrame as SparkDF,
-    functions as F,
 )
 
 from helpers_pyspark import _weights_calc
 from multilateral_methods import time_dummy_pyspark
-from wls import wls
 
 __author__ = ['Dr. Usman Kayani']
 
@@ -64,7 +61,7 @@ def multilateral_methods_pyspark(
             "Invalid method or not implemented yet."
         )
     
-    # Get timeseries for output index.
+    # Get timeseries for output index.;;
     time_series = [i.month for i in df.select(date_col).distinct().collect()]
     
     # Calculate weights for each item in each period.

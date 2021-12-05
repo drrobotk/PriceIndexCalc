@@ -42,7 +42,6 @@ shares weighted least squares regression.
 
 from typing import List, Sequence, Optional
 from itertools import combinations
-import time
 
 import pandas as pd
 import numpy as np
@@ -62,7 +61,7 @@ from pyspark.sql import (
 from pyspark import SparkContext
 
 from bilateral_methods import *
-from helpers import diag, weights_calc
+from helpers import diag, _weights_calc
 from wls import wls
 
 __author__ = ['Dr. Usman Kayani']
@@ -112,7 +111,7 @@ def geks(
                 .drop(columns='weights') 
             )
             # Recalculate weights for matched df.
-            df_matched = weights_calc(df_matched)
+            df_matched = _weights_calc(df_matched)
             # Append values to upper triangular of matrix.
             pindices[i, j] = time_dummy(df_matched)[-1]
         else:

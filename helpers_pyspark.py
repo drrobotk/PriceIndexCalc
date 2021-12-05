@@ -4,6 +4,8 @@ from pyspark.sql import (
 )
 from pyspark.sql.window import Window
 
+__author__ = ['Dr. Usman Kayani']
+
 def _weights_calc(
     price_col: str = 'price',
     quantity_col: str = 'quantity',
