@@ -244,6 +244,42 @@ def geary_khamis(
 
     return index_vals.iloc[:, 0].tolist()
 
+def time_dummy_pyspark(
+    df: SparkDF,
+    Number_of_periods: int,
+    price_col: str = 'price',
+    date_col: str = 'month',
+    product_id_col: str = 'id',
+    characteristics: Optional[Sequence[str]] = None,
+) -> List:
+    """Obtain the time dummy indices for a given dataframe in PySpark.
+
+    Calculates the time dummy indices using a formula with weighted least
+    squares regression.  When passed with characteristics, this function returns
+    the Time Dummy Hedonic indices. When passed without it returns the Time
+    Product Dummy indices.
+    """  
+    # Calculate logarithm of the prices for each item.
+    df = df.withColumn('log_price', F.log(price_col))
+
+    non_time_vars = characteristics if characteristics else [product_id_col]
+
+    # WLS regression with labels, features & weights -> fit model.
+    model = (
+        wls(
+            df,
+            dependent_var='log_price',
+            independent_vars=[date_col, *non_time_vars],
+            engine='pyspark'
+        )
+    )
+
+    # Extracting time dummy coefficients.
+    time_dummy_coeff = model.coefficients[:Number_of_periods-1][::-1]
+    
+    # Get indices from the time dummy coefficients & set first = 1.
+    return [1, *np.exp(time_dummy_coeff)]
+
 def geary_khamis_pyspark(
     df: SparkDF,
     sc: SparkContext,
@@ -380,39 +416,3 @@ def geary_khamis_pyspark(
     initial_pl = price_levels[0]
 
     return [pl/initial_pl for pl in price_levels]
-
-def time_dummy_pyspark(
-    df: SparkDF,
-    Number_of_periods: int,
-    price_col: str = 'price',
-    date_col: str = 'month',
-    product_id_col: str = 'id',
-    characteristics: Optional[Sequence[str]] = None,
-) -> List:
-    """Obtain the time dummy indices for a given dataframe in PySpark.
-
-    Calculates the time dummy indices using a formula with weighted least
-    squares regression.  When passed with characteristics, this function returns
-    the Time Dummy Hedonic indices. When passed without it returns the Time
-    Product Dummy indices.
-    """  
-    # Calculate logarithm of the prices for each item.
-    df = df.withColumn('log_price', F.log(price_col))
-
-    non_time_vars = characteristics if characteristics else [product_id_col]
-
-    # WLS regression with labels, features & weights -> fit model.
-    model = (
-        wls(
-            df,
-            dependent_var='log_price',
-            independent_vars=[date_col, *non_time_vars],
-            engine='pyspark'
-        )
-    )
-
-    # Extracting time dummy coefficients.
-    time_dummy_coeff = model.coefficients[:Number_of_periods-1][::-1]
-    
-    # Get indices from the time dummy coefficients & set first = 1.
-    return [1, *np.exp(time_dummy_coeff)]
