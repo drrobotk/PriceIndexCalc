@@ -46,7 +46,7 @@ from scipy.stats.mstats import gmean
 
 from bilateral import *
 from helpers import diag, _weights_calc
-from wls import wls
+from weighted_least_squares import wls
 
 __author__ = ['Dr. Usman Kayani']
 

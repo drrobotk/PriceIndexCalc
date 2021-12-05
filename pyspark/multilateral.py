@@ -35,7 +35,7 @@ from pyspark.sql import (
 )
 from pyspark import SparkContext
 
-from wls import wls_pyspark
+from weighted_least_squares import wls_pyspark
 
 __author__ = ['Dr. Usman Kayani']
 
