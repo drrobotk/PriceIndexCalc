@@ -12,8 +12,8 @@ from pyspark.sql import (
     DataFrame as SparkDF,
 )
 
-from helpers_pyspark import _weights_calc
-from multilateral_methods import time_dummy_pyspark
+from helpers import _weights_calc_pyspark
+from multilateral import time_dummy_pyspark
 
 __author__ = ['Dr. Usman Kayani']
 
@@ -29,7 +29,7 @@ def multilateral_methods_pyspark(
     """
     Calculate multilateral index numbers in PySpark.
 
-    Currently supported: Time Product Dummy (TPD) and Time Hedonic Dummy (TDH).
+    Currently supported: Time Product Dummy (tpd) and Time Hedonic Dummy (tdh).
 
     Parameters
     ----------
@@ -48,7 +48,7 @@ def multilateral_methods_pyspark(
     characteristics: list of str, defaults to None
         The names of the characteristics columns.
     method: str
-        Options: {TPD', 'TDH'}
+        Options: {tpd', 'tdh'}
         The multilateral method to apply.
 
     Returns
@@ -56,7 +56,9 @@ def multilateral_methods_pyspark(
     pd.DataFrame
         A pandas dataframe of the index values.
     """
-    if method not in {'TPD', 'TDH'}:
+    method = method.lower()
+
+    if method not in {'tpd', 'tdh'}:
         raise ValueError(
             "Invalid method or not implemented yet."
         )
@@ -67,10 +69,10 @@ def multilateral_methods_pyspark(
     # Calculate weights for each item in each period.
     df = df.withColumn(
         'weights',
-        _weights_calc(price_col, quantity_col, date_col)
+        _weights_calc_pyspark(price_col, quantity_col, date_col)
     )
       
-    if method == 'TPD':
+    if method == 'tpd':
         index_vals = time_dummy_pyspark(
             df,
             len(time_series),
@@ -78,7 +80,7 @@ def multilateral_methods_pyspark(
             date_col,
             product_id_col,
         )
-    elif method == 'TDH':
+    elif method == 'tdh':
         if not characteristics:
             raise ValueError(
                 "Characteristics required for TDH."
