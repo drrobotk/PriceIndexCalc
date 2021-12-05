@@ -12,10 +12,10 @@ import numpy as np
 from pyspark.sql import (
     DataFrame as SparkDF,
     functions as F,
-    Column as SparkCol,
 )
-from pyspark.sql.window import Window
 
+from helpers_pyspark import _weights_calc
+from multilateral_methods import time_dummy_pyspark
 from wls import wls
 
 __author__ = ['Dr. Usman Kayani']
@@ -74,7 +74,7 @@ def multilateral_methods_pyspark(
     )
       
     if method == 'TPD':
-        index_vals =_get_time_dummy_index(
+        index_vals = time_dummy_pyspark(
             df,
             len(time_series),
             price_col,
@@ -87,7 +87,7 @@ def multilateral_methods_pyspark(
                 "Characteristics required for TDH."
             )
         else: 
-            index_vals = _get_time_dummy_index(
+            index_vals = time_dummy_pyspark(
                 df,
                 len(time_series),
                 price_col,
@@ -104,51 +104,3 @@ def multilateral_methods_pyspark(
         .rename({0: 'index_value'}, axis=1)
     )
 
-def _get_time_dummy_index(
-    df: SparkDF,
-    Number_of_periods: int,
-    price_col: str = 'price',
-    date_col: str = 'month',
-    product_id_col: str = 'id',
-    characteristics: Optional[Sequence[str]] = None,
-) -> List:
-    """Obtain the time dummy indices for a given dataframe in PySpark.
-
-    Calculates the time dummy indices using a formula with weighted least
-    squares regression.  When passed with characteristics, this function returns
-    the Time Dummy Hedonic indices. When passed without it returns the Time
-    Product Dummy indices.
-    """  
-    # Calculate logarithm of the prices for each item.
-    df = df.withColumn('log_price', F.log(price_col))
-
-    non_time_vars = characteristics if characteristics else [product_id_col]
-
-    # WLS regression with labels, features & weights -> fit model.
-    model = (
-        wls(
-            df,
-            dependent_var='log_price',
-            independent_vars=[date_col, *non_time_vars],
-            engine='pyspark'
-        )
-    )
-
-    # Extracting time dummy coefficients.
-    time_dummy_coeff = model.coefficients[:Number_of_periods-1][::-1]
-    
-    # Get indices from the time dummy coefficients & set first = 1.
-    return [1, *np.exp(time_dummy_coeff)]
-
-
-def _weights_calc(
-    price_col: str = 'price',
-    quantity_col: str = 'quantity',
-    date_col: str = 'month',
-)-> SparkCol:
-    """Calculate weights from expenditure shares in PySpark."""
-    window = Window.partitionBy(date_col)
-    expenditure = F.col(price_col)*F.col(quantity_col)
-    
-    return expenditure / F.sum(expenditure).over(window)
-  

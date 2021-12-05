@@ -13,10 +13,11 @@ the linking factor.
 """
 from pyspark.sql import (
     DataFrame as SparkDF,
-    Column as SparkCol,
     functions as F,
     Window,
 )
+
+from helpers_pyspark import _cumprod_over_period
 
 __author__ = ['Dr. Usman Kayani']
 
@@ -120,14 +121,4 @@ def chain_linking_join(
         .drop('link_factor', 'year')
     )
 
-def _cumprod_over_period(
-    col: SparkCol,
-    date_col: str = 'period'
-) -> SparkCol:
-    """Cumulative product of numeric column over a period window."""
-    window = (
-        Window
-        .orderBy(date_col)
-        .rowsBetween(Window.unboundedPreceding, Window.currentRow)
-    )
-    return F.exp(F.sum(F.log(col)).over(window))
+
