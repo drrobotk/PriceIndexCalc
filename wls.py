@@ -25,20 +25,18 @@ def wls(
     dependent_var: str,
     independent_vars: Sequence[str],
     engine: str = 'numpy',
-):
+) -> pd.Series:
     """Perform weighted least squares regression.
 
     Parameters
     ----------
-    df : SparkDF or pd.DataFrame
+    df : pd.DataFrame or SparkDF for `engine='pyspark'`
         Contains columns for each object in the formula and a weights
         column as a minimum.
     dependent_var: str
         The dependent variable for the regression.
     independent_vars: list of str
         The independent variables for the regression.
-    weights_col : str, defaults to 'weights'
-        User-defined weight column name.
     engine: str, defaults to 'numpy'
         Options: {'numpy', 'statsmodels', 'sklearn', 'pyspark'}
 
@@ -46,8 +44,8 @@ def wls(
 
     Returns
     -------
-    pyspark LinearRegressionModel
-        A weighted linear regression model derived from a least-squares
+    pd.Series
+        Coefficients for a weighted linear regression model derived from a least-squares
         fit.
 
     """
@@ -58,6 +56,7 @@ def wls_numpy(
     dependent_var: str,
     independent_vars: Sequence[str],
 ) -> pd.Series:
+    """Weighted least squares with numpy."""
     # Obtain variables and weight for wls regression.
     X, Y, weights = _get_vars(df, dependent_var, independent_vars)
     W = np.array(weights)
@@ -72,6 +71,7 @@ def wls_statsmodels(
     dependent_var: str,
     independent_vars: Sequence[str],
 ) -> pd.Series:
+    """Weighted least squares with statsmodels."""
     # Obtain variables and weight for wls regression.
     X, Y, weights = _get_vars(df, dependent_var, independent_vars)
     
@@ -84,6 +84,7 @@ def wls_sklearn(
     dependent_var: str,
     independent_vars: Sequence[str],
 ) -> pd.Series:
+    """Weighted least squares with Sklearn."""
     # Obtain variables and weight for wls regression.
     X, Y, weights = _get_vars(df, dependent_var, independent_vars)
 
@@ -101,6 +102,7 @@ def wls_pyspark(
     dependent_var: str,
     independent_vars: Sequence[str],
 ) -> LinearRegressionModel:
+    """PySpark model for least squares regression."""
     # Set up stages for pipeline.
     indexers, encoders, vec_cols = [], [], []
     for column in independent_vars:
@@ -144,6 +146,7 @@ def _get_vars(
     dependent_var: str,
     independent_vars: Sequence[str],
 ):
+    """Get variables for least squares regression."""
     # Split the categoerical and numerical vars.
     categorical_vars, numerical_vars = _vars_split(df[independent_vars[1:]])
 
