@@ -80,14 +80,14 @@ def geary_khamis_pyspark(
     price_col: str = 'price',
     quantity_col: str = 'quantity',
     date_col: str = 'month',
-    product_level: str = 'id',
+    product_id_col: str = 'id',
 ) -> List:
     """Obtain the Geary-Khamis indices for a given dataframe in PySpark.
 
     Calculates the Geary-Khamis indices using matrix operations.
     """
     pivoted_df = (
-        df.groupby(product_level)
+        df.groupby(product_id_col)
         .pivot(date_col)
     )
 
@@ -97,8 +97,8 @@ def geary_khamis_pyspark(
         matrix_dfs.append(
             pivoted_df
             .avg(col)
-            .sort(product_level)
-            .drop(product_level)
+            .sort(product_id_col)
+            .drop(product_id_col)
             .fillna(0)
         )
     cols = matrix_dfs[0].columns

@@ -5,7 +5,7 @@ Provides the following function:
 
 * :func:`multilateral_methods_pyspark`
 """
-from typing import Sequence, List, Optional
+from typing import Sequence, Optional
 
 import pandas as pd
 from pyspark.sql import (
@@ -13,7 +13,7 @@ from pyspark.sql import (
 )
 
 from helpers import _weights_calc_pyspark
-from multilateral import time_dummy_pyspark
+from multilateral import geary_khamis_pyspark, time_dummy_pyspark
 
 __author__ = ['Dr. Usman Kayani']
 
@@ -48,7 +48,7 @@ def multilateral_methods_pyspark(
     characteristics: list of str, defaults to None
         The names of the characteristics columns.
     method: str
-        Options: {tpd', 'tdh'}
+        Options: {tpd', 'tdh', 'gk'}
         The multilateral method to apply.
 
     Returns
@@ -58,7 +58,7 @@ def multilateral_methods_pyspark(
     """
     method = method.lower()
 
-    if method not in {'tpd', 'tdh'}:
+    if method not in {'tpd', 'tdh', 'gk'}:
         raise ValueError(
             "Invalid method or not implemented yet."
         )
@@ -71,7 +71,9 @@ def multilateral_methods_pyspark(
         'weights',
         _weights_calc_pyspark(price_col, quantity_col, date_col)
     )
-      
+
+    if method == 'gk':
+        index_vals = geary_khamis_pyspark(df, price_col, date_col, product_id_col)
     if method == 'tpd':
         index_vals = time_dummy_pyspark(
             df,
