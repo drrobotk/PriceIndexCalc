@@ -4,16 +4,6 @@ import pandas as pd
 import numpy as np
 import statsmodels.api as SM
 from sklearn.linear_model import LinearRegression as LR
-from pyspark.ml import Pipeline
-from pyspark.ml.regression import (
-    LinearRegression,
-    LinearRegressionModel,
-)
-from pyspark.ml.feature import (
-    StringIndexer,
-    OneHotEncoder,
-    VectorAssembler,
-)
 from pyspark.sql import DataFrame as SparkDF
 
 from helpers import _vars_split
@@ -30,7 +20,7 @@ def wls(
 
     Parameters
     ----------
-    df : pd.DataFrame or SparkDF for `engine='pyspark'`
+    df : pd.DataFrame
         Contains columns for each object in the formula and a weights
         column as a minimum.
     dependent_var: str
@@ -38,15 +28,15 @@ def wls(
     independent_vars: list of str
         The independent variables for the regression.
     engine: str, defaults to 'numpy'
-        Options: {'numpy', 'statsmodels', 'sklearn', 'pyspark'}
+        Options: {'numpy', 'statsmodels', 'sklearn'}
 
         Engine to use for wls computation.
 
     Returns
     -------
     pd.Series
-        Coefficients for a weighted linear regression model derived from a least-squares
-        fit.
+        Coefficients for a weighted linear regression model derived from a
+        least-squares fit.
 
     """
     return globals()[f'wls_{engine}'](df, dependent_var, independent_vars)
@@ -96,50 +86,6 @@ def wls_sklearn(
     )
 
     return pd.Series(coefficients, index=X.columns)
-
-def wls_pyspark(
-    df: SparkDF,
-    dependent_var: str,
-    independent_vars: Sequence[str],
-) -> LinearRegressionModel:
-    """PySpark model for least squares regression."""
-    # Set up stages for pipeline.
-    indexers, encoders, vec_cols = [], [], []
-    for column in independent_vars:
-        # Map the string cols of labels to numeric values.
-        indexers.append(
-            StringIndexer(
-                inputCol=column,
-                outputCol=f'{column}_numeric',
-                stringOrderType='alphabetDesc',
-            )
-            .fit(df)
-        )
-
-        # Encode the numeric values to dummy variables.
-        encoders.append(
-            OneHotEncoder(
-                inputCol=f'{column}_numeric',
-                outputCol=f'{column}_vector',
-            )
-        )
-        vec_cols.append(f'{column}_vector')
-
-    # Transform vectors for dummy vars into a single vector (features).
-    assembler = VectorAssembler(inputCols=vec_cols, outputCol="features")
-    # Create a pipeline to perform the sequence of stages above.
-    pipeline = Pipeline(stages=indexers + encoders + [assembler])
-
-    # Fit & transform the dataframe according to pipeline for model.
-    model_df = pipeline.fit(df).transform(df)
-
-    # WLS regression with labels, features & weights -> fit model.
-    wls_model = LinearRegression(
-        labelCol=dependent_var,
-        featuresCol='features',
-        weightCol='weights',
-    )
-    return wls_model.fit(model_df)
 
 def _get_vars(
     df: pd.DataFrame,
