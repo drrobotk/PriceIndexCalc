@@ -15,7 +15,7 @@ Multilateral methods can use a specified number of time periods to calculate the
     │   ├── bilateral.py            
     │   ├── multilateral.py
     |   └── wls.py                 
-    ├── pyspark                    # PySpark modules
+    ├── pyspark                    # PySpark modules (experimental)
     │   ├── index_methods.py              
     │   ├── chaining.py             
     │   ├── helpers.py             
