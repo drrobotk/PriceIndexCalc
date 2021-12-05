@@ -1,9 +1,5 @@
-from typing import Sequence, Union
+from typing import Sequence
 
-import pandas as pd
-import numpy as np
-import statsmodels.api as SM
-from sklearn.linear_model import LinearRegression as LR
 from pyspark.ml import Pipeline
 from pyspark.ml.regression import (
     LinearRegression,
@@ -15,8 +11,6 @@ from pyspark.ml.feature import (
     VectorAssembler,
 )
 from pyspark.sql import DataFrame as SparkDF
-
-from helpers import _vars_split
 
 __author__ = ['Dr. Usman Kayani']
 
