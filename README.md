@@ -8,6 +8,7 @@ Multilateral methods can use a specified number of time periods to calculate the
 
 Directory layout:
     .
+    ├── ...
     ├── README.md
     ├── pandas                    # Pandas modules
     │   ├── index_methods.py         
@@ -21,4 +22,5 @@ Directory layout:
     │   ├── chaining.py             
     │   ├── helpers.py             
     │   ├── multilateral.py
-    |   └── wls.py  
+    |   └── wls.py
+    └── ...  
