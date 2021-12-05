@@ -6,10 +6,8 @@ Multilateral methods simultaneously make use of all data over a given time perio
 
 Multilateral methods can use a specified number of time periods to calculate the resulting price index; the number of time-periods used by multilateral methods is commonly defined as a “window length”. Currently we use the entire timeseries length as the window length until timeseries extension methods are to be implemented.
 
-Directory layout:
+### Directory layout:
     .
-    ├── ...
-    ├── README.md
     ├── pandas                    # Pandas modules
     │   ├── index_methods.py         
     │   ├── chaining.py             
@@ -23,4 +21,4 @@ Directory layout:
     │   ├── helpers.py             
     │   ├── multilateral.py
     |   └── wls.py
-    └── ...  
+    └── README.md  
