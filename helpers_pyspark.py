@@ -12,7 +12,6 @@ def _weights_calc(
     """Calculate weights from expenditure shares in PySpark."""
     window = Window.partitionBy(date_col)
     expenditure = F.col(price_col)*F.col(quantity_col)
-    
     return expenditure / F.sum(expenditure).over(window)
   
 def _cumprod_over_period(
