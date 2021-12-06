@@ -12,14 +12,14 @@ Multilateral methods can use a specified number of time periods to calculate the
 
 ### Directory layout:
     .
-    ├── pandas                    # Pandas modules
+    ├── pandas_modules                    # Pandas modules
     │   ├── index_methods.py         
     │   ├── chaining.py             
     │   ├── helpers.py             
     │   ├── bilateral.py            
     │   ├── multilateral.py
     |   └── weighted_least_squares.py                 
-    ├── pyspark                    # PySpark modules (experimental)
+    ├── pyspark_modules                    # PySpark modules (experimental)
     │   ├── index_methods.py              
     │   ├── chaining.py             
     │   ├── helpers.py             
