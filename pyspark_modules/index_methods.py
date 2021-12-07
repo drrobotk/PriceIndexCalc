@@ -12,8 +12,8 @@ from pyspark.sql import (
     DataFrame as SparkDF,
 )
 
-from helpers import _weights_calc_pyspark
-from multilateral import geary_khamis_pyspark, time_dummy_pyspark
+from .helpers import _weights_calc_pyspark
+from .multilateral import geary_khamis_pyspark, time_dummy_pyspark
 
 __author__ = ['Dr. Usman Kayani']
 

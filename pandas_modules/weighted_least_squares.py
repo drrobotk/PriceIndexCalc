@@ -6,7 +6,7 @@ import statsmodels.api as SM
 from sklearn.linear_model import LinearRegression as LR
 from pyspark.sql import DataFrame as SparkDF
 
-from helpers import _vars_split
+from .helpers import _vars_split
 
 __author__ = ['Dr. Usman Kayani']
 

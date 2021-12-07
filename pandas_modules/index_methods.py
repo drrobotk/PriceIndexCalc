@@ -20,9 +20,9 @@ from typing import Sequence, Optional
 import pandas as pd
 import seaborn as sns
 
-from helpers import weights_calc
-from bilateral import *
-from multilateral import *
+from .helpers import weights_calc
+from .bilateral import *
+from .multilateral import *
 
 __author__ = ['Dr. Usman Kayani']
 
