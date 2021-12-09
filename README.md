@@ -2,7 +2,7 @@
 
 Calculate bilateral and multilateral price indices.
 
-Bilateral methods supported: Carli, Jevons, Dutot, Laspeyres, Paasche, geom_Laspeyres, geom_Paasche, Drobish, Marshall Edgeworth, Palgrave, Fisher, Tornqvist, Walsh, Sato Vartia, Geary Khamis, TPD and Rothwell.
+Bilateral methods supported: Carli, Jevons, Dutot, Laspeyres, Paasche, geometric Laspeyres, geometric Paasche, Drobish, Marshall-Edgeworth, Palgrave, Fisher, Tornqvist, Walsh, Sato-Vartia, Geary-Khamis, TPD and Rothwell.
 
 Multilateral methods supported: GEKS paired with a bilateral method (e.g GEKS-T aka CCDI), Time Product Dummy (TPD), Time Dummy Hedonic (TDH), Geary-Khamis (GK) method. 
 
