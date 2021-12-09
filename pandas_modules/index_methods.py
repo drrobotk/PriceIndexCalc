@@ -20,7 +20,7 @@ from typing import Sequence, Optional
 import pandas as pd
 import seaborn as sns
 
-from .helpers import weights_calc
+from .helpers import _weights_calc
 from .bilateral import *
 from .multilateral import *
 
@@ -126,7 +126,7 @@ def bilateral_methods(
                 .drop_duplicates()
             )
             # Recalculate weights for matched df.
-            df_matched = weights_calc(df_matched)
+            df_matched = _weights_calc(df_matched)
             # Append values to upper triangular of matrix.
             index_vals[i] = time_dummy(df_matched)[-1]
         else:
@@ -267,7 +267,7 @@ def multilateral_methods(
         )
 
     # Calculate weights for each item in each period.
-    df = weights_calc(df, *args)
+    df = _weights_calc(df, *args)
 
     # Obtain unique time periods present in the data.
     periods = df[date_col].unique()
@@ -299,4 +299,4 @@ def multilateral_methods(
     if plot:
         sns.set(rc={'figure.figsize':(11, 4)})
         (output_df * 100).plot(linewidth=2)
-    return output_df
+    return output_df.reset_index()
