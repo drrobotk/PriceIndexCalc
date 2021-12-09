@@ -180,16 +180,85 @@ def geary_khamis(
     price_col: str = 'price',
     quantity_col: str = 'quantity',
     date_col: str = 'month',
-    product_col: str = 'id',
+    product_id_col: str = 'id',
 ) -> List:
-    """Obtain the Geary-Khamis indices for a given dataframe.
+    r"""Obtain the Geary-Khamis indices for a given dataframe.
 
     Calculates the Geary-Khamis indices using matrix operations.
+    
+    Parameters
+    ----------
+    price_col : str, defaults to 'price'
+        User-defined price column name.
+    quantity_col : str, defaults to 'quantity'
+        User-defined quantity column name.
+    product_id_col : str, defaults to 'product_id'
+        The column name containing product ID values or product names.
+
+    Returns
+    -------
+    List
+        The sorted list of indices for each group.
+
+    Notes
+    -----
+    For Geary-Khamis with the matrix method, we can determine the
+    quality adjustment factors by solving the system of equations:
+
+    .. math::
+
+            \vec{b}=\left[I_{N}-C+R\right]^{-1} \vec{c}
+
+    where :math:`\vec{c} = [1,0,\ldots, 0]^T` is an :math:`N \times 1`
+    vector and :math:`R` is an :math:`N \times N` matrix given by,
+
+    .. math::
+
+            R=\left[\begin{array}{cccc}
+                1 & 1 & \ldots & 1 \\
+                0 & \ldots & \ldots & 0 \\
+                \vdots & & & \vdots \\
+                0 & \ldots & \ldots & 0
+            \end{array}\right]
+
+    and :math:`C` is the :math:`N \times N` matrix defined by,
+
+    .. math::
+
+            C=\hat{q}^{-1} \sum_{t=1}^{T} s^{t} q^{t \mathbf{T}}
+
+    where :math:`\hat{q}^{-1}` is the inverse of an :math:`N \times N`
+    diagonal matrix :math:`\hat{q}`, where the diagonal elements are the
+    total quantities purchased for each good over all time periods,
+    :math:`s^{t}` is a vector of the expenditure shares for time period
+    :math:`t`, and :math:`q^{t \mathbf{T}}` is the transpose of the
+    vector of quantities purchased in time period :math:`t`.
+
+    Once the :math:`\vec{b}` vector has been calculated, the price
+    levels can be computed from the equation:
+
+    .. math::
+
+            P_{t} =\frac{p^{t} \cdot q^{t}}{ \vec{b} \cdot q^{t}}
+
+    The price index values can be determined by normalizing the price
+    levels by the first period as,
+
+    .. math::
+
+            I_{t} = \frac{P_{t}}{P_{0}}
+
+    References
+    ----------
+    Diewart, W. E, and Kevin, F. (2017). Substitution Bias in
+    Multilateral Methods for CPI Construction Using Scanner Data.
+    Discussion Paper 1702. Department of Economics, University of
+    British Columbia.
     """
     # We pivot the dataframe for the required vectors and matrices, and fillna
     # to deal with missing items.
     df = (
-        df.pivot_table(index=product_col, columns=date_col)
+        df.pivot_table(index=product_id_col, columns=date_col)
         .fillna(0)
     )
 
