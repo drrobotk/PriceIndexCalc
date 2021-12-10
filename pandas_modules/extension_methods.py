@@ -33,6 +33,13 @@ def movement_splice(revisions: pd.DataFrame, window: int = 12) -> pd.DataFrame:
     # Multiply by the value at the end of the initial revised window.
     return movement_splice.mul(revisions.iat[window, window])
 
+def hasp(
+    revisions: pd.DataFrame,
+    window: int = 12,
+) -> pd.DataFrame:
+    """Apply the half window splice revision extension method."""
+    return wisp(revisions, window, half_window=True)
+
 def wisp(
     revisions: pd.DataFrame,
     window: int = 12,
