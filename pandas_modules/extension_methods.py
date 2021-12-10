@@ -123,12 +123,6 @@ def mean_pub(revisions: pd.DataFrame, window: int = 12) -> pd.DataFrame:
     # Since the geometric mean is a product of all values raised to the
     # power of the reciprocal (of the window length), first multiply
     # all the terms together.
-
-    # When considering a full window plus the base period value i.e. n+1
-    # values, where n is the window length, take a rolling product of
-    # the first n values which includes the base period and divide that
-    # by the latest available revised value for that period i.e. the
-    # (n+1)th value, raised to the power of n.
     rolling_splice = (
         revisions.pow(window)
         .div(
