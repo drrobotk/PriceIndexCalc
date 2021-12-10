@@ -297,8 +297,8 @@ def multilateral_methods(
             .rename({0: 'index_value'}, axis=1)
         )
     else:
-        #splice_method = splicing_methods(extension_method)
-        splice_method = movement_splice
+        splice_method_dict = {'movement': movement_splice, 'wisp': wisp}
+        splice_method = splice_method_dict.get(extension_method)
         index_vals = splice_method(rolling_revisions, window-1)
     
     initial_window = rolling_revisions.iloc[:window, window-1]
