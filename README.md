@@ -1,6 +1,6 @@
 # IndexNumCalc
 
-Calculate bilateral and multilateral price indices.
+Calculate bilateral and multilateral price indices in Python using Pandas or PySpark.
 
 Bilateral methods supported: Carli, Jevons, Dutot, Laspeyres, Paasche, geometric Laspeyres, geometric Paasche, Drobish, Marshall-Edgeworth, Palgrave, Fisher, Tornqvist, Walsh, Sato-Vartia, Geary-Khamis, TPD and Rothwell.
 
