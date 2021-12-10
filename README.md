@@ -15,7 +15,7 @@ They are used or currently being implemented by many statistical agencies around
     ├── pandas_modules                    # Pandas modules
     │   ├── index_methods.py         
     │   ├── chaining.py
-    │   ├── extension_methods.py    # Timeseries extension methods (experimental)                 
+    │   ├── extension_methods.py    # New timeseries extension methods (experimental)                 
     │   ├── helpers.py             
     │   ├── bilateral.py            
     │   ├── multilateral.py
