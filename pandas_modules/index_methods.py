@@ -297,7 +297,7 @@ def multilateral_methods(
             .rename({0: 'index_value'}, axis=1)
         )
     else:
-        splice_method_dict = {'movement': movement_splice, 'wisp': wisp, 'hasp': hasp}
+        splice_method_dict = {'movement': movement_splice, 'wisp': wisp, 'hasp': hasp, 'mean_pub': mean_pub}
         splice_method = splice_method_dict.get(extension_method)
         index_vals = splice_method(rolling_revisions, window-1)
     
