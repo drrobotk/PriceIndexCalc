@@ -23,7 +23,6 @@ import seaborn as sns
 from .helpers import _weights_calc
 from .bilateral import *
 from .multilateral import *
-from .extension_methods import *
 
 __author__ = ['Dr. Usman Kayani']
 
@@ -176,8 +175,7 @@ def multilateral_methods(
     quantity_col: str = 'quantity',
     date_col: str='month',
     product_id_col: str='id',
-    extension_method: str = 'pure',
-    window: int = None,
+    characteristics: Optional[Sequence[str]] = None,
     groups: Optional[Sequence[str]] = None,
     method: str = 'all',
     bilateral_method: str = 'tornqvist',
@@ -233,15 +231,6 @@ def multilateral_methods(
     pd.DataFrame
         Dataframe containing the timeseries and index values.
     """
-    # Obtain unique time periods present in the data.
-    periods = df[date_col].unique()
-
-    if extension_method == 'pure':
-        window = len(periods)
-    else:
-        if not window:
-            window = 13
-
     method, bilateral_method = method.lower(), bilateral_method.lower()
 
     valid_methods =  {'all', 'geks', 'gk', 'tpd', 'tdh'}
@@ -268,9 +257,7 @@ def multilateral_methods(
                     lambda df_group: multilateral_methods(
                         df_group,
                         *args,
-                        extension_method=extension_method,
-                        window=window,
-                        groups=None,
+                        characteristics=characteristics,
                         method=method,
                         bilateral_method=bilateral_method,
                         td_engine=td_engine,
@@ -278,91 +265,38 @@ def multilateral_methods(
                     )
             )
         )
+
     # Calculate weights for each item in each period.
     df = _weights_calc(df, *args)
 
-    func_dict = {'geks': geks, 'tpd': time_dummy, 'gk': geary_khamis}
-    func = func_dict.get(method)
+    # Obtain unique time periods present in the data.
+    periods = df[date_col].unique()
 
-    rolling_revisions = rolling_window(df, method, *args, window, bilateral_method)
-
-    if extension_method == 'pure':
-        if method == 'geks':
-            args += (bilateral_method, )
-        df_pivoted = df.set_index([date_col, product_id_col]).unstack(product_id_col)
-        return (
-            func(df_pivoted, *args)
-            .rename_axis(date_col)
-            .to_frame()
-            .rename({0: 'index_value'}, axis=1)
+    if method == 'all':
+        index_vals = {
+            f'index_value_geks': geks(df, *args, bilateral_method),
+            'index_value_gk': geary_khamis(df, *args),
+            'index_value_td': time_dummy(df, *args, characteristics, engine=td_engine)
+        }
+    elif method == 'geks':
+        index_vals = geks(df, *args, bilateral_method)
+    elif method == 'gk':
+        index_vals = geary_khamis(df, *args)
+    elif method == 'tpd':
+        index_vals = time_dummy(df, *args, None, engine=td_engine)
+    elif method == 'tdh':
+        if not characteristics:
+            raise ValueError("Characteristics required for TDH.")
+        else:
+            index_vals = time_dummy(df, *args, characteristics, engine=td_engine)
+    output_df = (
+        pd.DataFrame(
+            index_vals,
+            index=periods
         )
-    else:
-        splice_method_dict = {'movement': movement_splice, 'wisp': wisp, 'hasp': hasp, 'mean_pub': mean_pub}
-        splice_method = splice_method_dict.get(extension_method)
-        index_vals = splice_method(rolling_revisions, window-1)
-    
-    initial_window = rolling_revisions.iloc[:window, window-1]
-    index_vals =  pd.concat([initial_window, index_vals])
-
+        .rename({0: 'index_value'}, axis=1)
+    )
     if plot:
         sns.set(rc={'figure.figsize':(11, 4)})
-        (index_vals * 100).plot(linewidth=2)
-
-    return index_vals.rename({0: 'index_value'}, axis=1)
-
-
-def rolling_window(
-    df: pd.DataFrame,
-    method,
-    price_col: str = 'price',
-    quantity_col: str = 'quantity',
-    date_col: str = 'date',
-    product_id_col: str = 'id',
-    window: int = 13,
-    bilateral_method: str = 'tornqvist',
-) -> pd.DataFrame:
-    """Calculate the time dummy indices over a dynamic window.
-
-    This function will calculate the TPD indices for each window
-    (rolling or expanding). 
-
-    Parameters
-    ----------
-    window_type: str, default 'rolling'
-        The type of the dynamic window, whether to use a rolling or
-        expanding window.
-
-    Returns
-    -------
-    pandas DataFrame
-        A square matrix dataframe containing time dummy index values
-        for each (rolling or expanding) window.
-
-    """
-    args = (price_col, quantity_col, date_col, product_id_col)
-    if method == 'geks':
-        args += (bilateral_method, )
-
-    func_dict = {'geks': geks, 'tpd': time_dummy, 'gk': geary_khamis}
-    func = func_dict.get(method)
-
-    # Gets a single time series across the index axis. This is necessary
-    # to apply the window functions over each period.
-    pivoted = df.set_index([date_col, product_id_col]).unstack(product_id_col)
-
-    windows = pivoted.rolling(window)
-
-    output_df = pd.DataFrame()
-    for window_df in windows:
-        # Get latest period for name for this window's output index.
-        latest_period = window_df.index[-1]
-
-        index_vals = (
-            func(window_df, *args)
-            .rename(latest_period)
-        )
-
-        output_df = pd.concat([output_df, index_vals], axis=1)
-
-    return output_df.rename_axis(date_col)
-
+        (output_df * 100).plot(linewidth=2)
+    return output_df.reset_index()
