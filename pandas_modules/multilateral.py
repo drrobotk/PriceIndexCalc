@@ -345,6 +345,7 @@ def _geary_khamis_iterative(
             .T
         )
 
+        # Break loop when we reach given precision for final price levels.
         if abs(price_levels - new_price_levels).sum() < precision:
             break
         else:
