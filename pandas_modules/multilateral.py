@@ -144,6 +144,7 @@ def geks(
         index=periods,
     )
 
+
 def time_dummy(
     df: pd.DataFrame,
     price_col: str = 'price',
