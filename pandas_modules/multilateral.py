@@ -328,7 +328,6 @@ def _geary_khamis_iterative(
     precision: float = 1e-9,
 ):
     """Geary-Khamis iterative method which is used as a fallback."""
-
     # Initialise index vals as 1's to find the solution with iteration.
     price_levels = np.ones((1, len(prices.columns)))
 
