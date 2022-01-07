@@ -65,6 +65,9 @@ def geks(
     bilaterals, where we exploit the symmetry condition a_{i j} = 1/a_{j i} and
     a_{i i} = 1 to save computation time, followed by a geometric mean.
     """
+    # Reverse unstack from dynamic window func.
+    df = df.stack().reset_index([date_col, product_id_col])
+
     # Get unique periods and length of time series.
     periods = df[date_col].unique()
     no_of_periods = len(periods)
@@ -136,7 +139,10 @@ def geks(
     pgeo = gmean(pindices)
 
     # Normalize to first period.
-    return pgeo/pgeo[0]
+    return pd.Series(
+        pgeo/pgeo[0],
+        index=periods,
+    )
 
 def time_dummy(
     df: pd.DataFrame,
@@ -144,7 +150,6 @@ def time_dummy(
     quantity_col: str = 'quantity',
     date_col: str = 'month',
     product_id_col: str = 'id',
-    characteristics: Optional[Sequence[str]] = None,
     engine: str = 'numpy'
 ) -> List:
     """Obtain the time dummy indices for a given dataframe.
@@ -154,14 +159,20 @@ def time_dummy(
     the Time Dummy Hedonic indices. When passed without it returns the Time
     Product Dummy indices.
     """
+    # Reverse unstack from dynamic window func.
+    df = df.stack().reset_index([date_col, product_id_col])
+
     # Set the dtype for ID columns, in case it is numerical.
     df[product_id_col] = df[product_id_col].astype(str)
 
     # Calculate logarithm of the prices for each item for dependent variable.
     df['log_price'] = np.log(df[price_col])
 
+    # Get time series for output index.
+    time_series = df[date_col].unique()
+
     # Get terms for wls regression where characteristics are used if available.
-    non_time_vars = characteristics if characteristics else [product_id_col]
+    non_time_vars = [product_id_col]
 
     model_params = wls(
         df,
@@ -173,7 +184,11 @@ def time_dummy(
     # Get indices from the time dummy coefficients & set first = 1.
     is_time_dummy = model_params.index.str.contains(date_col)
 
-    return [1, *np.exp(model_params.loc[is_time_dummy])]
+    return pd.Series(
+        [1, *np.exp(model_params.loc[is_time_dummy])],
+        index=time_series,
+    )
+
 
 def geary_khamis(
     df: pd.DataFrame,
@@ -255,20 +270,18 @@ def geary_khamis(
     Discussion Paper 1702. Department of Economics, University of
     British Columbia.
     """
-    # We pivot the dataframe for the required vectors and matrices, and fillna
-    # to deal with missing items.
-    df = (
-        df.pivot_table(index=product_id_col, columns=date_col)
-        .fillna(0)
-    )
+    # We need to deal with missing values and reshape the df for the
+    # required vectors and matrices.
+    df = _matrix_method_reshape(df)
 
-    # Get number of unique products for the size of the vectors and matrices.
-    N = len(df.index)
+    # Get number of unique products for the size of the vectors and
+    # matrices.
+    N = len(df.index.unique(level=product_id_col))
 
     # Matrices for the prices, quantities and weights.
-    prices = df[price_col]
-    quantities = df[quantity_col]
-    weights = df['weights']
+    prices = df.loc[price_col]
+    quantities = df.loc[quantity_col]
+    weights = df.loc['weights']
 
     # Inverse of diagonal matrix with total quantities for each good over all
     # time periods as diagonal elements and matrix product of weights and
@@ -283,15 +296,70 @@ def geary_khamis(
     C_matrix = q_matrix_inverse @ prod_weights_qt_matrix
     R_matrix = np.zeros(shape=(N, N))
     R_matrix[:1] = 1
+    
+    # Define combo matrix used for isolating the singular matrices and
+    # calculating the index values as `I_n - C + R`.
+    combo_matrix = np.identity(N) - C_matrix + R_matrix
+    
+    if abs(np.linalg.det(combo_matrix)) < 1e-10:
+        # Fallback to iterative method for singular matrices.
+        return _geary_khamis_iterative(prices, quantities)
+    else:
+        # Calculation of the vector b required to produce the price levels.
+        # Corresponds to `b = [I_n - C + R]^-1 [1,0,..,0]^T`.
+        # We use the Moore-Penrose inverse for the matrix inverse.
+        b = np.linalg.pinv(combo_matrix) @ np.eye(N, 1)
 
-    # Calculation of the vector b required to produce the price levels.
-    # Corresponds to `b = [I_n - C + R]^-1 [1,0,..,0]^T`
-    b = np.linalg.pinv(np.identity(N) - C_matrix + R_matrix) @ np.eye(N, 1)
+        # Determine price levels to compute the final index values.
+        price_levels = diag(prices.T @ quantities).div(quantities.T @ b)
 
-    # Determine price levels to compute the final index values.
-    price_levels = diag(prices.T @ quantities).div(quantities.T @ b)
+        # Normalize price levels to first period for final index values.
+        index_vals = price_levels / price_levels.iloc[0]
 
-    # Normalize price levels to first period for final index values.
-    index_vals = price_levels / price_levels.iloc[0]
+        # Output as Pandas series for dynamic window.
+        return index_vals.iloc[:, 0]
 
-    return index_vals.iloc[:, 0].tolist()
+
+def _geary_khamis_iterative(
+    prices: pd.DataFrame,
+    quantities: pd.DataFrame,
+    no_of_iterations: int = 100,
+    precision: float = 1e-9,
+):
+    """Geary-Khamis iterative method which is used as a fallback."""
+
+    # Initialise index vals as 1's to find the solution with iteration.
+    price_levels = np.ones((1, len(prices.columns)))
+
+    # Iterate until we reach the set level of precision, or after a set
+    # number of iterations if they do not converge.
+    for _ in range(no_of_iterations):
+        price_change = prices / price_levels
+        quantity_change = quantities.T / quantities.T.sum()
+
+        new_price_levels = (
+            diag(prices.T @ quantities)
+            .div(quantities.T @ diag(price_change @ quantity_change))
+            .to_numpy()
+            .T
+        )
+
+        if abs(price_levels - new_price_levels).sum() < precision:
+            break
+        else:
+            price_levels = new_price_levels
+
+    price_levels = pd.Series(price_levels[0], index=prices.columns)
+
+    return price_levels / price_levels.iloc[0]
+
+
+def _matrix_method_reshape(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Reshape df for matrix method and deal with missing values.
+
+    We first drop columns which contain all missing values, transpose
+    the dataframe and then fill the remaining missing values with zero,
+    to deal with missing items in some periods.
+    """
+    return df.dropna(how='all', axis=1).T.fillna(0)
