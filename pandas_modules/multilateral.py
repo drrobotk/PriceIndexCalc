@@ -352,10 +352,8 @@ def _geary_khamis_iterative(
             # Otherwise set price level for next iteration.
             price_levels = new_price_levels
 
-    price_levels = pd.Series(price_levels[0], index=prices.columns)
-
-    # Normalize by first period for final output.
-    return price_levels / price_levels.iloc[0]
+    # Define pandas series and normalize by first period for final output.
+    return pd.Series(price_levels[0] / price_levels[0,0], index=prices.columns)
 
 
 def _geary_khamis_matrix(
