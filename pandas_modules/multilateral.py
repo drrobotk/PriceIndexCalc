@@ -349,7 +349,7 @@ def _geary_khamis_iterative(
             # Break loop when we reach given precision for final price levels.
             break
         else:
-            # Set price level for next iteration.
+            # Otherwise set price level for next iteration.
             price_levels = new_price_levels
 
     price_levels = pd.Series(price_levels[0], index=prices.columns)
