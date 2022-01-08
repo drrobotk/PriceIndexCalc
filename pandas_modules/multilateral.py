@@ -345,14 +345,16 @@ def _geary_khamis_iterative(
             .T
         )
 
-        # Break loop when we reach given precision for final price levels.
         if abs(price_levels - new_price_levels).sum() <= precision:
+            # Break loop when we reach given precision for final price levels.
             break
         else:
+            # Set price level for next iteration.
             price_levels = new_price_levels
 
     price_levels = pd.Series(price_levels[0], index=prices.columns)
 
+    # Normalize by first period for final output.
     return price_levels / price_levels.iloc[0]
 
 
