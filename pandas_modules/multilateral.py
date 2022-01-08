@@ -302,30 +302,40 @@ def geary_khamis(
     # calculating the index values as `I_n - C + R`.
     combo_matrix = np.identity(N) - C_matrix + R_matrix
     
-    if abs(np.linalg.det(combo_matrix)) < 1e-10:
+    if abs(np.linalg.det(combo_matrix)) > 1e-7:
+        # Primary matrix method for non-singular matrices.
+        return _geary_khamis_matrix(prices, quantities, combo_matrix)
+    else:
         # Fallback to iterative method for singular matrices.
         return _geary_khamis_iterative(prices, quantities)
-    else:
-        # Calculation of the vector b required to produce the price levels.
-        # Corresponds to `b = [I_n - C + R]^-1 [1,0,..,0]^T`.
-        # We use the Moore-Penrose inverse for the matrix inverse.
-        b = np.linalg.pinv(combo_matrix) @ np.eye(N, 1)
 
-        # Determine price levels to compute the final index values.
-        price_levels = diag(prices.T @ quantities).div(quantities.T @ b)
 
-        # Normalize price levels to first period for final index values.
-        index_vals = price_levels / price_levels.iloc[0]
+def _geary_khamis_matrix(
+    prices: pd.DataFrame,
+    quantities: pd.DataFrame,
+    combo_matrix: pd.DataFrame,
+):
+    """Geary-Khamis matrix method as a primary."""
+    # Calculation of the vector b required to produce the price levels.
+    # Corresponds to `b = [I_n - C + R]^-1 [1,0,..,0]^T`.
+    # We use the Moore-Penrose inverse for the matrix inverse.
+    b = np.linalg.pinv(combo_matrix) @ np.eye(len(prices.index), 1)
 
-        # Output as Pandas series for dynamic window.
-        return index_vals.iloc[:, 0]
+    # Determine price levels to compute the final index values.
+    price_levels = diag(prices.T @ quantities).div(quantities.T @ b)
+
+    # Normalize price levels to first period for final index values.
+    index_vals = price_levels / price_levels.iloc[0]
+
+    # Output as Pandas series for dynamic window.
+    return index_vals.iloc[:, 0]
 
 
 def _geary_khamis_iterative(
     prices: pd.DataFrame,
     quantities: pd.DataFrame,
     no_of_iterations: int = 100,
-    precision: float = 1e-9,
+    precision: float = 1e-8,
 ):
     """Geary-Khamis iterative method which is used as a fallback."""
     # Initialise index vals as 1's to find the solution with iteration.
@@ -337,10 +347,12 @@ def _geary_khamis_iterative(
         price_change = prices / price_levels
         quantity_change = quantities.T / quantities.T.sum()
 
+        b = diag(price_change @ quantity_change)
+
         # Calculate new price levels from previous value.
         new_price_levels = (
             diag(prices.T @ quantities)
-            .div(quantities.T @ diag(price_change @ quantity_change))
+            .div(quantities.T @ b)
             .to_numpy()
             .T
         )
