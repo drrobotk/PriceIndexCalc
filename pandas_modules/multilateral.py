@@ -352,7 +352,8 @@ def _geary_khamis_iterative(
             # Otherwise set price level for next iteration.
             price_levels = new_price_levels
 
-    # Define pandas series and normalize by first period for final output.
+    # Define Pandas series for dynamic window and normalize by first period for
+    # final output.
     return pd.Series(price_levels[0] / price_levels[0,0], index=prices.columns)
 
 
