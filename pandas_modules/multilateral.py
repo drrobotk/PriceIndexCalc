@@ -302,33 +302,23 @@ def geary_khamis(
     # calculating the index values as `I_n - C + R`.
     combo_matrix = np.identity(N) - C_matrix + R_matrix
     
-    if abs(np.linalg.det(combo_matrix)) > 1e-7:
-        # Primary matrix method for non-singular matrices.
-        return _geary_khamis_matrix(prices, quantities, combo_matrix)
-    else:
+    if abs(np.linalg.det(combo_matrix)) <= 1e-7:
         # Fallback to iterative method for singular matrices.
         return _geary_khamis_iterative(prices, quantities)
+    else:
+        # Primary matrix method for non-singular matrices.
+        return _geary_khamis_matrix(prices, quantities, combo_matrix)
 
 
-def _geary_khamis_matrix(
-    prices: pd.DataFrame,
-    quantities: pd.DataFrame,
-    combo_matrix: pd.DataFrame,
-):
-    """Geary-Khamis matrix method as a primary."""
-    # Calculation of the vector b required to produce the price levels.
-    # Corresponds to `b = [I_n - C + R]^-1 [1,0,..,0]^T`.
-    # We use the Moore-Penrose inverse for the matrix inverse.
-    b = np.linalg.pinv(combo_matrix) @ np.eye(len(prices.index), 1)
+def _matrix_method_reshape(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Reshape df for matrix method and deal with missing values.
 
-    # Determine price levels to compute the final index values.
-    price_levels = diag(prices.T @ quantities).div(quantities.T @ b)
-
-    # Normalize price levels to first period for final index values.
-    index_vals = price_levels / price_levels.iloc[0]
-
-    # Output as Pandas series for dynamic window.
-    return index_vals.iloc[:, 0]
+    We first drop columns which contain all missing values, transpose
+    the dataframe and then fill the remaining missing values with zero,
+    to deal with missing items in some periods.
+    """
+    return df.dropna(how='all', axis=1).T.fillna(0)
 
 
 def _geary_khamis_iterative(
@@ -358,7 +348,7 @@ def _geary_khamis_iterative(
         )
 
         # Break loop when we reach given precision for final price levels.
-        if abs(price_levels - new_price_levels).sum() < precision:
+        if abs(price_levels - new_price_levels).sum() <= precision:
             break
         else:
             price_levels = new_price_levels
@@ -368,12 +358,22 @@ def _geary_khamis_iterative(
     return price_levels / price_levels.iloc[0]
 
 
-def _matrix_method_reshape(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Reshape df for matrix method and deal with missing values.
+def _geary_khamis_matrix(
+    prices: pd.DataFrame,
+    quantities: pd.DataFrame,
+    combo_matrix: pd.DataFrame,
+):
+    """Geary-Khamis matrix method as a primary."""
+    # Calculation of the vector b required to produce the price levels.
+    # Corresponds to `b = [I_n - C + R]^-1 [1,0,..,0]^T`.
+    # We use the Moore-Penrose inverse for the matrix inverse.
+    b = np.linalg.pinv(combo_matrix) @ np.eye(len(prices.index), 1)
 
-    We first drop columns which contain all missing values, transpose
-    the dataframe and then fill the remaining missing values with zero,
-    to deal with missing items in some periods.
-    """
-    return df.dropna(how='all', axis=1).T.fillna(0)
+    # Determine price levels to compute the final index values.
+    price_levels = diag(prices.T @ quantities).div(quantities.T @ b)
+
+    # Normalize price levels to first period for final index values.
+    index_vals = price_levels / price_levels.iloc[0]
+
+    # Output as Pandas series for dynamic window.
+    return index_vals.iloc[:, 0]
