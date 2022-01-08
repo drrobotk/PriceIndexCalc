@@ -1,6 +1,6 @@
 # IndexNumCalc
 
-Calculate bilateral and multilateral price indices in Python using Pandas or PySpark. They are used or currently being implemented by many statistical agencies around the world to calculate price indices e.g the Consumer Price Index (CPI). Multilateral methods can use a specified number of time periods to calculate the resulting price index; the number of time-periods used by multilateral methods is commonly defined as a “window length”. 
+Calculate bilateral and multilateral price indices in Python using Pandas or PySpark, which are used or currently being implemented by many statistical agencies around the world to calculate price indices e.g the Consumer Price Index (CPI). Multilateral methods can use a specified number of time periods to calculate the resulting price index; the number of time-periods used by multilateral methods is commonly defined as a “window length”. 
 
 Bilateral methods supported: Carli, Jevons, Dutot, Laspeyres, Paasche, geometric Laspeyres, geometric Paasche, Drobish, Marshall-Edgeworth, Palgrave, Fisher, Tornqvist, Walsh, Sato-Vartia, Geary-Khamis, TPD and Rothwell.
 
