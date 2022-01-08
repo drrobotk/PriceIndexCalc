@@ -337,12 +337,10 @@ def _geary_khamis_iterative(
         price_change = prices / price_levels
         quantity_change = quantities.T / quantities.T.sum()
 
-        b = diag(price_change @ quantity_change)
-
         # Calculate new price levels from previous value.
         new_price_levels = (
             diag(prices.T @ quantities)
-            .div(quantities.T @ b)
+            .div(quantities.T @ diag(price_change @ quantity_change))
             .to_numpy()
             .T
         )
@@ -377,4 +375,3 @@ def _geary_khamis_matrix(
 
     # Output as Pandas series for dynamic window.
     return index_vals.iloc[:, 0]
-    
