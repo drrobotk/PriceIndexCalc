@@ -377,3 +377,4 @@ def _geary_khamis_matrix(
 
     # Output as Pandas series for dynamic window.
     return index_vals.iloc[:, 0]
+    
