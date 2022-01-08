@@ -326,7 +326,7 @@ def _geary_khamis_iterative(
     quantities: pd.DataFrame,
     no_of_iterations: int = 100,
     precision: float = 1e-8,
-):
+) -> pd.Series:
     """Geary-Khamis iterative method which is used as a fallback."""
     # Initialise index vals as 1's to find the solution with iteration.
     price_levels = np.ones((1, len(prices.columns)))
@@ -362,7 +362,7 @@ def _geary_khamis_matrix(
     prices: pd.DataFrame,
     quantities: pd.DataFrame,
     combo_matrix: pd.DataFrame,
-):
+) -> pd.Series:
     """Geary-Khamis matrix method as a primary."""
     # Calculation of the vector b required to produce the price levels.
     # Corresponds to `b = [I_n - C + R]^-1 [1,0,..,0]^T`.
