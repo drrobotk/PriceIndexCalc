@@ -299,7 +299,7 @@ def geary_khamis(
     R_matrix[:1] = 1
     
     # Define combo matrix used for isolating the singular matrices and
-    # calculating the index values as `I_n - C + R`.
+    # calculating the index values from the combo matrix `I_n - C + R`.
     combo_matrix = np.identity(N) - C_matrix + R_matrix
     
     if abs(np.linalg.det(combo_matrix)) <= 1e-7:
