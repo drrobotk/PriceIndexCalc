@@ -353,7 +353,7 @@ def _geary_khamis_iterative(
             price_levels = new_price_levels
 
     # Normalize by first period for final output.
-    return price_levels / price_levels[0]
+    return price_levels / price_levels.iloc[0]
 
 
 def _geary_khamis_matrix(
