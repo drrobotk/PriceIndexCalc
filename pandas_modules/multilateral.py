@@ -329,13 +329,13 @@ def _geary_khamis_iterative(
     """Geary-Khamis iterative method."""
     # Initialise index vals as 1's to find the solution with iteration.
     price_levels = pd.Series(1.0, index=prices.columns)
+    quantity_share = quantities.T / quantities.sum(axis=1)
 
     # Iterate until we reach the set level of precision, or after a set
     # number of iterations if they do not converge.
     for _ in range(no_of_iterations):
         # Obtain matrices for iterative calculation.
         deflated_prices = prices / price_levels
-        quantity_share = quantities.T / quantities.sum(axis=1)
         factors = diag(deflated_prices @ quantity_share)
 
         # Calculate new price levels from previous value.

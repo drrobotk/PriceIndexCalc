@@ -18,6 +18,7 @@ Provides the following bilateral methods:
 * :func:`geary_khamis_b`
 * :func:`tpd`
 * :func:`rothwell`
+* :func:`young`
 """
 import numpy as np
 
