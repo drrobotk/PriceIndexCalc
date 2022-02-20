@@ -345,7 +345,9 @@ def _geary_khamis_iterative(
             .squeeze()
         )
 
-        if abs(price_levels - new_price_levels).sum() <= precision:
+        pl_abs_diff = abs(price_levels - new_price_levels)
+        
+        if (pl_abs_diff <= precision).all():
             # Break loop when we reach given precision for final price levels.
             break
         else:

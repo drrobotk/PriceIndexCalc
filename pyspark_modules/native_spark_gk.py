@@ -36,11 +36,12 @@ def geary_khamis_pure(
     df: SparkDF,
     groups: Union[str, Sequence[str]] = None,
     no_of_iterations: int = 5,
+    precision: float = None,
     checkpoint: bool = False,
     price_col: str = 'price',
     quantity_col: str = 'quantity',
-    date_col: str = 'date',
-    product_id_col: str = 'product_id',
+    date_col: str = 'month',
+    product_id_col: str = 'id',
 ) -> SparkDF:
     """
     Calculate the index values with the Geary-Khamis iterative method using
@@ -56,6 +57,8 @@ def geary_khamis_pure(
     # Initialise price levels as 1's to find the solution with
     # iteration.
     price_levels = F.lit(1)
+    if precision:
+        df = df.withColumn('price_levels', price_levels)
 
     # Define windows for sum over groups.
     window_levels = get_window_spec(levels)
@@ -69,7 +72,6 @@ def geary_khamis_pure(
 
     # Iterate until we reach the set level of precision, or after a set
     # number of iterations if they do not converge.
-    # todo: Loop from here (using .rdd.map, multithreading)
     for iteration in range(no_of_iterations):
         # Obtain matrices for iterative calculation.
         deflated_prices = prices / price_levels
@@ -78,13 +80,22 @@ def geary_khamis_pure(
         # Determine the weighted quantity index for current price
         # levels.
         weighted_quality_index = (
-            F.sum(quantities*factors)
+            F.sum(quantities * factors)
             .over(window_index_groups)
         )
 
         # Calculate new price levels from previous value.
         new_price_levels = turnover / weighted_quality_index
         df = df.withColumn('new_price_levels', new_price_levels)
+
+        if precision:
+            pl_diff = F.col('new_price_levels') - F.col('price_levels')
+            is_precise = (
+                not bool(df.filter(F.abs(pl_diff) > precision).take(1))
+            )
+            if is_precise:
+                print(f'Precision of {precision} in {iteration} iterations.')
+                break
 
         # Otherwise set price level for next iteration. We set this from
         # the column values appended to the df above, rather than the
@@ -106,7 +117,6 @@ def geary_khamis_pure(
         .agg(F.first('index_value').alias('index_value'))
         .orderBy(index_groups)
     )
-
 
 df = pd.read_csv('tests/test_data/large_input_df.csv')
 
