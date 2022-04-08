@@ -59,7 +59,7 @@ def bilateral_methods(
     method: str, defaults to 'tornqvist'
         Options: {'carli', 'jevons', 'dutot', 'laspeyres', 'paasche',
         'geom_laspeyres', 'geom_paasche', 'drobish', 'marshall_edgeworth',
-        'palgrave', 'fisher', 'tornqvist', 'walsh', 'sato_vartia',
+        'palgrave', 'fisher', 'tornqvist', 'walsh', 'sato_vartia', 'lowe',
         'geary_khamis_b', 'tpd', 'rothwell'}
 
         The bilateral method to use.
@@ -214,7 +214,7 @@ def multilateral_methods(
     bilateral_method: str, defaults to 'tornqvist'
         Options: {'carli', 'jevons', 'dutot', 'laspeyres', 'paasche',
         'geom_laspeyres', 'geom_paasche', 'drobish', 'marshall_edgeworth',
-        'palgrave', 'fisher', 'tornqvist', 'walsh', 'sato_vartia',
+        'palgrave', 'fisher', 'tornqvist', 'walsh', 'sato_vartia', 'lowe',
         'geary_khamis_b', 'rothwell'}
 
         The bilateral method to pair with `method='geks'`.
