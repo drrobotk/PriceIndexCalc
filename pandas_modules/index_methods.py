@@ -140,7 +140,7 @@ def bilateral_methods(
                 'laspeyres', 'drobish', 'marshall_edgeworth',
                 'geom_laspeyres', 'tornqvist', 'fisher',
                 'walsh', 'sato_vartia', 'geary_khamis_b', 
-                'rothwell'
+                'rothwell', 'lowe'
             }:
                 q_base = df_base[quantity_col].to_numpy()
                 data += (q_base, )
@@ -235,7 +235,7 @@ def multilateral_methods(
 
     valid_methods =  {'all', 'geks', 'gk', 'tpd', 'tdh'}
     valid_bilateral_methods = {
-        'carli', 'jevons', 'dutot', 'laspeyres',
+        'carli', 'jevons', 'dutot', 'laspeyres', 'lowe',
         'paasche', 'geom_laspeyres', 'geom_paasche', 'drobish',
         'marshall_edgeworth', 'palgrave', 'fisher', 'tornqvist',
         'walsh', 'sato_vartia', 'geary_khamis_b', 'tpd', 'rothwell'
