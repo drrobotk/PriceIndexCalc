@@ -4,6 +4,7 @@ Provides the following bilateral methods:
 * :func:`carli`
 * :func:`jevons`
 * :func:`dutot`
+* :func:`lowe`
 * :func:`laspeyres`
 * :func:`paasche`
 * :func:`geom_laspeyres`
