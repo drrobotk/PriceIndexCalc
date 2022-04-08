@@ -77,7 +77,7 @@ def bilateral_methods(
     method = method.lower()
 
     valid_bilateral_methods = {
-        'carli', 'jevons', 'dutot', 'laspeyres',
+        'carli', 'jevons', 'dutot', 'laspeyres', 'lowe',
         'paasche', 'geom_laspeyres', 'geom_paasche', 'drobish',
         'marshall_edgeworth', 'palgrave', 'fisher', 'tornqvist',
         'walsh', 'sato_vartia', 'geary_khamis_b', 'tpd', 'rothwell'
