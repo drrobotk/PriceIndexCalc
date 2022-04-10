@@ -112,7 +112,7 @@ def geks(
                 'laspeyres', 'drobish', 'marshall_edgeworth',
                 'geom_laspeyres', 'tornqvist', 'fisher',
                 'walsh', 'sato_vartia', 'geary_khamis_b', 
-                'rothwell'
+                'rothwell', 'lowe'
             }:
                 q_base = df_base[quantity_col].to_numpy()
                 data += (q_base, )

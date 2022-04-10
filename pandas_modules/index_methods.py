@@ -100,6 +100,8 @@ def bilateral_methods(
                         plot=plot,
                     )
             )
+            .reset_index()
+            .rename({'level_1': 'month'}, axis=1)
         )
 
     periods = df[date_col].unique()
