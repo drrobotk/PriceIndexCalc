@@ -66,7 +66,7 @@ def geks(
     a_{i i} = 1 to save computation time, followed by a geometric mean.
     """
     # Reverse unstack from dynamic window func.
-    df = df.stack().reset_index([date_col, product_id_col])
+    #df = df.stack().reset_index([date_col, product_id_col])
 
     # Get unique periods and length of time series.
     periods = df[date_col].unique()
@@ -197,6 +197,7 @@ def geary_khamis(
     quantity_col: str = 'quantity',
     date_col: str = 'month',
     product_id_col: str = 'id',
+    method_type: str = 'matrix',
 ) -> List:
     r"""Obtain the Geary-Khamis indices for a given dataframe.
 
@@ -210,7 +211,10 @@ def geary_khamis(
         User-defined quantity column name.
     product_id_col : str, defaults to 'product_id'
         The column name containing product ID values or product names.
+    method_type: str, defaults to 'matrix'
+        Options: {'matrix', 'iterative'}
 
+        The method type to use for the GK computation.
     Returns
     -------
     List
@@ -271,6 +275,9 @@ def geary_khamis(
     Discussion Paper 1702. Department of Economics, University of
     British Columbia.
     """
+    if method_type not in ('matrix', 'iterative'):
+        raise ValueError('The method type must be `matrix` or `iterative`')
+
     # We need to deal with missing values and reshape the df for the
     # required vectors and matrices.
     df = _matrix_method_reshape(df)
@@ -283,6 +290,10 @@ def geary_khamis(
     prices = df.loc[price_col]
     quantities = df.loc[quantity_col]
     weights = df.loc['weights']
+
+    # Use iterative method directly if specified.
+    if method_type == 'iterative':
+        return _geary_khamis_iterative(prices, quantities)
 
     # Inverse of diagonal matrix with total quantities for each good over all
     # time periods as diagonal elements and matrix product of weights and
