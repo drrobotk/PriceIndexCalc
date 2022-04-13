@@ -266,8 +266,11 @@ def multilateral_methods(
                         plot=plot
                     )
             )
+            .reset_index()
+            .rename({'level_1': 'month'}, axis=1)
         )
-
+    if quantity_col not in df.columns:
+        df[quantity_col] = 1
     # Calculate weights for each item in each period.
     df = _weights_calc(df, *args)
 
