@@ -4,14 +4,13 @@ import pandas as pd
 import numpy as np
 import statsmodels.api as SM
 from sklearn.linear_model import LinearRegression as LR
-from pyspark.sql import DataFrame as SparkDF
 
 from .helpers import _vars_split
 
 __author__ = ['Dr. Usman Kayani']
 
 def wls(
-    df: Union[SparkDF, pd.DataFrame],
+    df: pd.DataFrame,
     dependent_var: str,
     independent_vars: Sequence[str],
     engine: str = 'numpy',
