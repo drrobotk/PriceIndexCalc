@@ -46,7 +46,25 @@ def wls_numpy(
     dependent_var: str,
     independent_vars: Sequence[str],
 ) -> pd.Series:
-    """Weighted least squares with numpy."""
+    """
+    Weighted least squares with numpy.
+    
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Contains columns for each object in the formula and a weights
+        column as a minimum.
+    dependent_var: str
+        The dependent variable for the regression.
+    independent_vars: list of str
+        The independent variables for the regression.
+
+    Returns
+    -------
+    pd.Series
+        Coefficients for a weighted linear regression model derived from a
+        least-squares fit.
+    """
     # Obtain variables and weight for wls regression.
     X, Y, weights = _get_vars(df, dependent_var, independent_vars)
     W = np.array(weights)
@@ -61,7 +79,25 @@ def wls_statsmodels(
     dependent_var: str,
     independent_vars: Sequence[str],
 ) -> pd.Series:
-    """Weighted least squares with statsmodels."""
+    """
+    Weighted least squares with statsmodels.
+    
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Contains columns for each object in the formula and a weights
+        column as a minimum.
+    dependent_var: str
+        The dependent variable for the regression.
+    independent_vars: list of str
+        The independent variables for the regression.
+    
+    Returns
+    -------
+    pd.Series
+        Coefficients for a weighted linear regression model derived from a
+        least-squares fit.
+    """
     # Obtain variables and weight for wls regression.
     X, Y, weights = _get_vars(df, dependent_var, independent_vars)
     
@@ -74,7 +110,25 @@ def wls_sklearn(
     dependent_var: str,
     independent_vars: Sequence[str],
 ) -> pd.Series:
-    """Weighted least squares with Sklearn."""
+    """
+    Weighted least squares with Sklearn.
+    
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Contains columns for each object in the formula and a weights
+        column as a minimum.
+    dependent_var: str
+        The dependent variable for the regression.
+    independent_vars: list of str
+        The independent variables for the regression.
+    
+    Returns
+    -------
+    pd.Series
+        Coefficients for a weighted linear regression model derived from a
+        least-squares fit.
+    """
     # Obtain variables and weight for wls regression.
     X, Y, weights = _get_vars(df, dependent_var, independent_vars)
 
@@ -91,8 +145,26 @@ def _get_vars(
     df: pd.DataFrame,
     dependent_var: str,
     independent_vars: Sequence[str],
-):
-    """Get variables for least squares regression."""
+) -> tuple[pd.Series, pd.Series, pd.Series]:
+    """
+    Get variables for least squares regression.
+    
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Contains columns for each object in the formula and a weights
+        column as a minimum.
+    dependent_var: str
+        The dependent variable for the regression.
+    independent_vars: list of str
+        The independent variables for the regression.
+
+    Returns
+    -------
+    tuple of pd.Series
+        X, Y, and weights for least squares regression.
+
+    """
     # Split the categoerical and numerical vars.
     categorical_vars, numerical_vars = _vars_split(df[independent_vars[1:]])
 

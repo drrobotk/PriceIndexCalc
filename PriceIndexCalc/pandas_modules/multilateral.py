@@ -64,6 +64,25 @@ def geks(
     Calculate the index values using a for loop to determine the matrix of
     bilaterals, where we exploit the symmetry condition a_{i j} = 1/a_{j i} and
     a_{i i} = 1 to save computation time, followed by a geometric mean.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe containing the data.
+    price_col : str, optional
+        Name of the column containing the price information.
+    quantity_col : str, optional
+        Name of the column containing the quantity information.
+    date_col : str, optional
+        Name of the column containing the date information.
+    product_id_col : str, optional
+        Name of the column containing the product id information.
+    bilateral_method : str, optional
+
+    Returns
+    -------
+    List
+        List of the GEKS indices.
     """
     # Reverse unstack from dynamic window func.
     #df = df.stack().reset_index([date_col, product_id_col])
@@ -159,6 +178,26 @@ def time_dummy(
     squares regression.  When passed with characteristics, this function returns
     the Time Dummy Hedonic indices. When passed without it returns the Time
     Product Dummy indices.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Dataframe containing the data.
+    price_col : str, optional
+        Name of the column containing the price information.
+    quantity_col : str, optional
+        Name of the column containing the quantity information.
+    date_col : str, optional
+        Name of the column containing the date information.
+    product_id_col : str, optional
+        Name of the column containing the product id information.
+    engine : str, optional
+        Name of the engine to use for the calculation.
+
+    Returns
+    -------
+    List
+        List of the time dummy indices.
     """
     # Reverse unstack from dynamic window func.
     df = df.stack().reset_index([date_col, product_id_col])
@@ -327,6 +366,16 @@ def _matrix_method_reshape(df: pd.DataFrame) -> pd.DataFrame:
     We first drop columns which contain all missing values, transpose
     the dataframe and then fill the remaining missing values with zero,
     to deal with missing items in some periods.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The dataframe to reshape.
+
+    Returns
+    -------
+    pd.DataFrame
+        The reshaped dataframe.
     """
     return df.dropna(how='all', axis=1).T.fillna(0)
 
@@ -337,7 +386,25 @@ def _geary_khamis_iterative(
     no_of_iterations: int = 100,
     precision: float = 1e-8,
 ) -> pd.Series:
-    """Geary-Khamis iterative method."""
+    """
+    Geary-Khamis iterative method.
+    
+    Parameters
+    ----------
+    prices : pd.DataFrame
+        The price dataframe.
+    quantities : pd.DataFrame
+        The quantity dataframe.
+    no_of_iterations : int, defaults to 100
+        The number of iterations to perform.
+    precision : float, defaults to 1e-8
+        The precision to use for the iterative method.
+
+    Returns
+    -------
+    pd.Series
+        The price index values.
+    """
     # Initialise index vals as 1's to find the solution with iteration.
     price_levels = pd.Series(1.0, index=prices.columns)
     quantity_share = quantities.T / quantities.sum(axis=1)
@@ -374,7 +441,23 @@ def _geary_khamis_matrix(
     quantities: pd.DataFrame,
     combo_matrix: pd.DataFrame,
 ) -> pd.Series:
-    """Geary-Khamis matrix."""
+    """
+    Geary-Khamis matrix method.
+
+    Parameters
+    ----------
+    prices : pd.DataFrame
+        The price dataframe.
+    quantities : pd.DataFrame
+        The quantity dataframe.
+    combo_matrix : pd.DataFrame
+        The combo matrix.
+
+    Returns
+    -------
+    pd.Series
+        The price index values.
+    """
     # Calculation of the vector b (factors) required to produce the
     # price levels. Corresponds to `b = [I_n - C + R]^-1 [1,0,..,0]^T`.
     # We use the Moore-Penrose inverse for the matrix inverse.
