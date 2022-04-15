@@ -24,4 +24,4 @@ Multilateral methods simultaneously make use of all data over a given time perio
     │   ├── helpers.py             
     │   ├── multilateral.py
     |   └── weighted_least_squares.py
-    └── README.md  
+    └── README.md
