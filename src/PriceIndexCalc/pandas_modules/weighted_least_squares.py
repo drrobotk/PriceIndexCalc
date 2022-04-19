@@ -1,4 +1,4 @@
-from typing import Sequence, Union
+from typing import Sequence, Tuple
 
 import pandas as pd
 import numpy as np
@@ -144,7 +144,7 @@ def _get_vars(
     df: pd.DataFrame,
     dependent_var: str,
     independent_vars: Sequence[str],
-) -> tuple[pd.Series, pd.Series, pd.Series]:
+) -> Tuple[pd.Series, pd.Series, pd.Series]:
     """
     Get variables for least squares regression.
     
