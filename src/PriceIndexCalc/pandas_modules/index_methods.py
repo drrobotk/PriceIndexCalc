@@ -271,8 +271,9 @@ def multilateral_methods(
         )
     if quantity_col not in df.columns:
         df[quantity_col] = 1
-    # Calculate weights for each item in each period.
-    df = _weights_calc(df, *args)
+    if bilateral_method not in ('jevons', 'carli', 'dutot'):
+        # Calculate weights for each item in each period.
+        df = _weights_calc(df, *args)
 
     # Obtain unique time periods present in the data.
     periods = df[date_col].unique()
@@ -304,4 +305,4 @@ def multilateral_methods(
     if plot:
         sns.set(rc={'figure.figsize':(11, 4)})
         (output_df * 100).plot(linewidth=2)
-    return output_df.reset_index()
+    return output_df
