@@ -35,6 +35,7 @@ def bilateral_methods(
     groups: Optional[Sequence[str]] = None,
     method: str = 'tornqvist',
     base_month: int = 1,
+    reference_month: int = 1,
     plot: bool = False,
 ) -> pd.DataFrame:
     """
@@ -65,6 +66,9 @@ def bilateral_methods(
         The bilateral method to use.
     base_month: int, defaults to 1
         Integer specifying the base month.
+    reference_month: int, defaults to 1
+        Integer specifying the reference month for rebasing if different from
+        the base month.
     plot: bool, defaults to False
         Boolean parameter on whether to plot the resulting timeseries for price
         indices.
@@ -166,6 +170,10 @@ def bilateral_methods(
         )
         .rename({0: 'index_value'}, axis=1)
     )
+    output_df.sort_index(inplace=True)
+    if base_month != reference_month:
+        # Rebase the index values to the reference month.
+        output_df = output_df / output_df.iloc[reference_month-1]
     if plot:
         sns.set(rc={'figure.figsize':(11, 4)})
         (output_df * 100).plot(linewidth=2)
@@ -182,6 +190,7 @@ def multilateral_methods(
     method: str = 'all',
     bilateral_method: str = 'tornqvist',
     td_engine: str = 'numpy',
+    refence_month: int = 1,
     plot: bool = False,
 ) -> pd.DataFrame:
     """
@@ -224,6 +233,8 @@ def multilateral_methods(
         Options: {'numpy', 'statsmodels', 'sklearn', 'pyspark'}
 
         Engine to use for wls computation with `method='tpd'`.
+    reference_month: int, defaults to 1
+        The month to use as the reference month for the multilateral methods.
     plot: bool, defaults to False
         Boolean parameter on whether to plot the resulting timeseries for price
         indices.
@@ -302,6 +313,9 @@ def multilateral_methods(
         )
         .rename({0: 'index_value'}, axis=1)
     )
+    output_df.sort_index(inplace=True)
+    if refence_month != 1:
+        output_df = output_df / output_df.iloc[refence_month - 1]
     if plot:
         sns.set(rc={'figure.figsize':(11, 4)})
         (output_df * 100).plot(linewidth=2)
