@@ -92,6 +92,19 @@ def bilateral_methods(
 
     args = (price_col, quantity_col, date_col, product_id_col)
 
+    periods = sorted(df[date_col].unique())
+    no_of_periods = len(periods)
+
+    # Obtain the base period in the dataframe.
+    base_period = periods[base_month-1]
+
+    # Determine product IDs present in the base period.
+    df_base = df.loc[df[date_col] == base_period]
+    keep_ids = df_base.loc[:, product_id_col].unique()
+
+    # Filter df to remove product IDs not present in the base period.
+    df = df[df[product_id_col].isin(keep_ids)].reset_index(drop=True)
+
     if groups:
         return (
             df
@@ -107,19 +120,6 @@ def bilateral_methods(
             .reset_index()
             .rename({'level_1': 'month'}, axis=1)
         )
-
-    periods = sorted(df[date_col].unique())
-    no_of_periods = len(periods)
-
-    # Obtain the base period in the dataframe.
-    base_period = periods[base_month-1]
-
-    # Determine product IDs present in the base period.
-    df_base = df.loc[df[date_col] == base_period]
-    keep_ids = df_base.loc[:, product_id_col].unique()
-
-    # Filter df to remove product IDs not present in the base period.
-    df = df[df[product_id_col].isin(keep_ids)].reset_index(drop=True)
 
     index_vals = np.zeros(no_of_periods)
 
