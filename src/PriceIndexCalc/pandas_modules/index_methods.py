@@ -108,8 +108,18 @@ def bilateral_methods(
             .rename({'level_1': 'month'}, axis=1)
         )
 
-    periods = df[date_col].unique()
+    periods = sorted(df[date_col].unique())
     no_of_periods = len(periods)
+
+    # Obtain the base period in the dataframe.
+    base_period = periods[base_month-1]
+
+    # Determine product IDs present in the base period.
+    df_base = df.loc[df[date_col] == base_period]
+    keep_ids = df_base.loc[:, product_id_col].unique()
+
+    # Filter df to remove product IDs not present in the base period.
+    df = df[df[product_id_col].isin(keep_ids)].reset_index(drop=True)
 
     index_vals = np.zeros(no_of_periods)
 
@@ -118,7 +128,6 @@ def bilateral_methods(
         func = globals()[method]
 
     for i in range(no_of_periods):
-        df_base = df.loc[df[date_col] == periods[base_month-1]]
         df_curr = df.loc[df[date_col] == periods[i]]
 
         # Make sure the sample is matched for given periods.
