@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='PriceIndexCalc',
-    version='0.1-dev4',
+    version='0.1-dev5',
     description='Price Index Calculator using bilateral and multilateral methods',
     author='Dr. Usman Kayani',
     url='https://github.com/drrobotk/PriceIndexCalc',
