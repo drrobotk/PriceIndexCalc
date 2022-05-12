@@ -15,7 +15,7 @@ and the following multilateral price index methods:
 * The GEKS method paired with a bilateral method, the Geary-Khamis method (GK)
   and Time Dummy methods (TPD, TDH).
 """
-from typing import Sequence, Optional
+from typing import Sequence, Optional, Union
 
 import pandas as pd
 import seaborn as sns
@@ -34,8 +34,8 @@ def bilateral_methods(
     product_id_col: str='id',
     groups: Optional[Sequence[str]] = None,
     method: str = 'tornqvist',
-    base_month: int = 1,
-    reference_month: int = 1,
+    base_month: Union[int, str] = 1,
+    reference_month: Union[int, str] = 1,
     plot: bool = False,
 ) -> pd.DataFrame:
     """
@@ -64,11 +64,13 @@ def bilateral_methods(
         'geary_khamis_b', 'tpd', 'rothwell'}
 
         The bilateral method to use.
-    base_month: int, defaults to 1
-        Integer specifying the base month.
-    reference_month: int, defaults to 1
-        Integer specifying the reference month for rebasing if different from
-        the base month.
+    base_month: int or str, defaults to 1
+        Integer or string specifying the base month. An integer specifies the
+        position while a string species the month in the format 'YYYY-MM'.
+    reference_month: int or str, defaults to 1
+        Integer or string specifying the reference month for rebasing if
+        different from the base month. An integer specifies the position while a
+        string species the month in the format 'YYYY-MM'.
     plot: bool, defaults to False
         Boolean parameter on whether to plot the resulting timeseries for price
         indices.
@@ -114,12 +116,20 @@ def bilateral_methods(
                         df_group,
                         *args,
                         method=method,
+                        base_month=base_month,
+                        reference_month=reference_month,
                         plot=plot,
                     )
             )
             .reset_index()
             .rename({'level_1': 'month'}, axis=1)
         )
+
+    if isinstance(base_month, str):
+        base_month = periods.index(base_month) + 1
+
+    if isinstance(reference_month, str):
+        reference_month = periods.index(reference_month) + 1
 
     index_vals = np.zeros(no_of_periods)
 
@@ -199,7 +209,7 @@ def multilateral_methods(
     method: str = 'all',
     bilateral_method: str = 'tornqvist',
     td_engine: str = 'numpy',
-    refence_month: int = 1,
+    refence_month: Union[int, str] = 1,
     plot: bool = False,
 ) -> pd.DataFrame:
     """
@@ -242,8 +252,10 @@ def multilateral_methods(
         Options: {'numpy', 'statsmodels', 'sklearn', 'pyspark'}
 
         Engine to use for wls computation with `method='tpd'`.
-    reference_month: int, defaults to 1
-        The month to use as the reference month for the multilateral methods.
+    reference_month: int or str, defaults to 1
+        The month to use as the reference month for the multilateral methods. An
+        integer specifies the position while a string species the month in the
+        format 'YYYY-MM'.
     plot: bool, defaults to False
         Boolean parameter on whether to plot the resulting timeseries for price
         indices.
@@ -283,6 +295,7 @@ def multilateral_methods(
                         method=method,
                         bilateral_method=bilateral_method,
                         td_engine=td_engine,
+                        reference_month=reference_month,
                         plot=plot
                     )
             )
@@ -297,6 +310,9 @@ def multilateral_methods(
 
     # Obtain unique time periods present in the data.
     periods = df[date_col].unique()
+
+    if isinstance(reference_month, str):
+        reference_month = periods.index(reference_month) + 1
 
     if method == 'all':
         index_vals = {
