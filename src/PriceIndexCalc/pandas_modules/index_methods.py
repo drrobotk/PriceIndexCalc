@@ -97,6 +97,12 @@ def bilateral_methods(
     periods = sorted(df[date_col].unique())
     no_of_periods = len(periods)
 
+    if isinstance(base_month, str):
+        base_month = periods.index(base_month) + 1
+
+    if isinstance(reference_month, str):
+        reference_month = periods.index(reference_month) + 1
+
     # Obtain the base period in the dataframe.
     base_period = periods[base_month-1]
 
@@ -124,12 +130,6 @@ def bilateral_methods(
             .reset_index()
             .rename({'level_1': 'month'}, axis=1)
         )
-
-    if isinstance(base_month, str):
-        base_month = periods.index(base_month) + 1
-
-    if isinstance(reference_month, str):
-        reference_month = periods.index(reference_month) + 1
 
     index_vals = np.zeros(no_of_periods)
 
@@ -209,7 +209,7 @@ def multilateral_methods(
     method: str = 'all',
     bilateral_method: str = 'tornqvist',
     td_engine: str = 'numpy',
-    refence_month: Union[int, str] = 1,
+    reference_month: Union[int, str] = 1,
     plot: bool = False,
 ) -> pd.DataFrame:
     """
