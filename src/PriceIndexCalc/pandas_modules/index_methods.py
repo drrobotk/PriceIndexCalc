@@ -311,7 +311,7 @@ def multilateral_methods(
         df = _weights_calc(df, *args)
 
     # Obtain unique time periods present in the data.
-    periods = df[date_col].unique()
+    periods = sorted(df[date_col].unique())
 
     if isinstance(reference_month, str):
         reference_month = periods.index(reference_month) + 1
@@ -341,8 +341,8 @@ def multilateral_methods(
         .rename({0: 'index_value'}, axis=1)
     )
     output_df.sort_index(inplace=True)
-    if refence_month != 1:
-        output_df = output_df / output_df.iloc[refence_month - 1]
+    if reference_month != 1:
+        output_df = output_df / output_df.iloc[reference_month - 1]
     if plot:
         sns.set(rc={'figure.figsize':(11, 4)})
         (output_df * 100).plot(linewidth=2)
