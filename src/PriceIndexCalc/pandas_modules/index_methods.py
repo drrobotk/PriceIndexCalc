@@ -285,6 +285,12 @@ def multilateral_methods(
 
     args = (price_col, quantity_col, date_col, product_id_col)
 
+    # Obtain unique time periods present in the data.
+    periods = sorted(df[date_col].unique())
+
+    if isinstance(reference_month, str):
+        reference_month = periods.index(reference_month) + 1
+
     if groups:
         return (
             df
@@ -309,12 +315,6 @@ def multilateral_methods(
     if bilateral_method not in ('jevons', 'carli', 'dutot'):
         # Calculate weights for each item in each period.
         df = _weights_calc(df, *args)
-
-    # Obtain unique time periods present in the data.
-    periods = sorted(df[date_col].unique())
-
-    if isinstance(reference_month, str):
-        reference_month = periods.index(reference_month) + 1
 
     if method == 'all':
         index_vals = {
