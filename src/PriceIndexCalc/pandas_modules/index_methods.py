@@ -22,7 +22,6 @@ import seaborn as sns
 
 from .helpers import _weights_calc
 from .bilateral import *
-from .common import compute_bilateral
 from .multilateral import geary_khamis, geks, time_dummy, compute_bilateral
 
 __author__ = ['Dr. Usman Kayani']
