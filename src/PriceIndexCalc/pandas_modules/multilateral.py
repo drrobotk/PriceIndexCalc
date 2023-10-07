@@ -37,18 +37,106 @@ pooled data of one or more periods via an application of expenditure
 shares weighted least squares regression.
 """
 
-from typing import List, Sequence, Optional
+from typing import List, Sequence, Dict, Tuple
 from itertools import combinations
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import pandas as pd
 import numpy as np
 from scipy.stats.mstats import gmean
 
-from .bilateral import *
 from .helpers import diag, _weights_calc
 from .weighted_least_squares import wls
+from .bilateral import *
 
 __author__ = ['Dr. Usman Kayani']
+
+def compute_bilateral(
+        df_by_period: Dict,
+        periods: Sequence,
+        i: int,
+        j: int,
+        bilateral_method: str,
+        price_col: str = 'price',
+        quantity_col : str = 'quantity',
+        product_id_col: str = 'id',
+) -> Tuple:
+    """
+    Compute bilateral indices for a given pair of periods.
+
+    Parameters
+    ----------
+    df_by_period : Dict
+        Dictionary of dataframes by period.
+    periods : Sequence
+        Sequence of periods.
+    i : int
+        Index of first period.
+    j : int
+        Index of second period.
+    bilateral_method : str
+        Name of the bilateral method.
+    price_col : str, optional
+        Name of the column containing the price information.
+    quantity_col : str, optional
+        Name of the column containing the quantity information.
+    product_id_col : str, optional
+        Name of the column containing the product id information.
+    """
+    df_base = df_by_period[periods[i]]
+    df_curr = df_by_period[periods[j]]
+
+    common_products = (
+        set(df_base[product_id_col])
+        .intersection(set(df_curr[product_id_col]))
+    )
+
+    df_base = df_base[df_base[product_id_col].isin(common_products)]
+    df_curr = df_curr[df_curr[product_id_col].isin(common_products)]
+
+    if bilateral_method == 'tpd':
+        df_matched = pd.concat([df_base, df_curr]).drop_duplicates()
+        df_matched = _weights_calc(df_matched)
+        return i, j, time_dummy(df_matched)[-1]
+    else:
+        bilateral_func = globals()[bilateral_method]
+        p_base = df_base[price_col].values
+        p_curr = df_curr[price_col].values
+        data = (p_base, p_curr)
+
+        if bilateral_method in {
+            'laspeyres', 
+            'paasche', 
+            'geom_laspeyres', 
+            'geom_paasche', 
+            'drobish', 
+            'marshall_edgeworth', 
+            'tornqvist', 
+            'fisher', 
+            'walsh', 
+            'sato_vartia', 
+            'geary_khamis_b', 
+            'rothwell', 
+            'lowe'
+        }:
+            q_base = df_base[quantity_col].values
+            data += (q_base,)
+
+        if bilateral_method in {
+            'paasche', 
+            'geom_paasche', 
+            'drobish', 
+            'marshall_edgeworth', 
+            'tornqvist', 
+            'fisher', 
+            'walsh', 
+            'sato_vartia', 
+            'geary_khamis_b'
+        }:
+            q_curr = df_curr[quantity_col].values
+            data += (q_curr,)
+
+        return i, j, bilateral_func(*data)
 
 def geks(
     df: pd.DataFrame,
@@ -84,83 +172,47 @@ def geks(
     List
         List of the GEKS indices.
     """
-    # Reverse unstack from dynamic window func.
-    #df = df.stack().reset_index([date_col, product_id_col])
-
     # Get unique periods and length of time series.
+    # Pre-filter data for each unique period
     periods = df[date_col].unique()
     no_of_periods = len(periods)
+    df_by_period = {
+        period: df[df[date_col] == period] 
+        for period in periods
+    }
 
-    if bilateral_method != 'tpd':
-        # Obtain bilateral function for bilateral method.
-        bilateral_func = globals()[bilateral_method]
-
-    # Intialize matrix for bilateral pairs.
     pindices = np.zeros((no_of_periods, no_of_periods))
 
-    for month_idx in combinations(range(no_of_periods), 2):
-        # Get period index for base and current month, and slice df for these
-        # months.
-        i, j = month_idx
-        df_base = df.loc[df[date_col] == periods[i]]
-        df_curr = df.loc[df[date_col] == periods[j]]
-
-        # Make sure the sample is matched for given periods.
-        df_base = df_base[df_base[product_id_col].isin(df_curr[product_id_col])]
-        df_curr = df_curr[df_curr[product_id_col].isin(df_base[product_id_col])]
-
-        if bilateral_method == 'tpd':
-            # Use multilateral TPD method with two periods.
-            df_matched = (
-                pd.concat([df_base, df_curr])
-                .drop_duplicates()
-                .drop(columns='weights') 
+    with ThreadPoolExecutor(max_workers=no_of_periods) as executor:
+        futures = [
+            executor.submit(
+                compute_bilateral, 
+                df_by_period, 
+                periods, 
+                i, 
+                j, 
+                bilateral_method, 
+                price_col, 
+                quantity_col, 
+                product_id_col
             )
-            # Recalculate weights for matched df.
-            df_matched = _weights_calc(df_matched)
-            # Append values to upper triangular of matrix.
-            pindices[i, j] = time_dummy(df_matched)[-1]
-        else:
-            # Find price and quantity vectors of base period and current period.
-            p_base = df_base[price_col].to_numpy()
-            p_curr = df_curr[price_col].to_numpy()
-            data = (p_base, p_curr)
+            for i, j in combinations(range(no_of_periods), 2)
+        ]
 
-            # Get quantities for bilateral methods that use this information.
-            if bilateral_method in {
-                'laspeyres', 'drobish', 'marshall_edgeworth',
-                'geom_laspeyres', 'tornqvist', 'fisher',
-                'walsh', 'sato_vartia', 'geary_khamis_b', 
-                'rothwell', 'lowe'
-            }:
-                q_base = df_base[quantity_col].to_numpy()
-                data += (q_base, )
-            if bilateral_method in {
-                'paasche', 'drobish','palgrave',
-                'marshall_edgeworth', 'geom_paasche', 'tornqvist',
-                'fisher', 'walsh', 'sato_vartia',
-                'geary_khamis_b'
-            }:
-                q_curr = df_curr[quantity_col].to_numpy()
-                data += (q_curr, )
+    for future in as_completed(futures):
+        i, j, result = future.result()
+        pindices[i, j] = result
 
-            # Determine the bilaterals for each base and current period and
-            # append to upper tringular of matrix.
-            pindices[i, j] = bilateral_func(*data)
-
-    # Exploit symmetry conditions for matrix of bilaterals.
     pindices_sym = np.copy(pindices.T)
     mask = pindices_sym != 0
     pindices_sym[mask] = 1/pindices_sym[mask]
     pindices += pindices_sym + np.identity(no_of_periods)
 
-    # Calculate geometric mean for the unnormalized price levels.
     pgeo = gmean(pindices)
 
-    # Normalize to first period.
     return pd.Series(
         pgeo/pgeo[0],
-        index=periods,
+        index=periods
     )
 
 
@@ -170,6 +222,7 @@ def time_dummy(
     quantity_col: str = 'quantity',
     date_col: str = 'month',
     product_id_col: str = 'id',
+    characteristics: List = None,
     engine: str = 'numpy'
 ) -> List:
     """Obtain the time dummy indices for a given dataframe.
@@ -191,6 +244,8 @@ def time_dummy(
         Name of the column containing the date information.
     product_id_col : str, optional
         Name of the column containing the product id information.
+    characteristics: List, optional
+        List of the characteristics to use for the calculation.
     engine : str, optional
         Name of the engine to use for the calculation.
 
@@ -199,9 +254,6 @@ def time_dummy(
     List
         List of the time dummy indices.
     """
-    # Reverse unstack from dynamic window func.
-    df = df.stack().reset_index([date_col, product_id_col])
-
     # Set the dtype for ID columns, in case it is numerical.
     df[product_id_col] = df[product_id_col].astype(str)
 
@@ -319,6 +371,10 @@ def geary_khamis(
 
     # We need to deal with missing values and reshape the df for the
     # required vectors and matrices.
+    df = df.pivot(index=date_col, columns=product_id_col)
+
+    # We need to deal with missing values and reshape the df for the
+    # required vectors and matrices.
     df = _matrix_method_reshape(df)
 
     # Get number of unique products for the size of the vectors and
@@ -350,7 +406,7 @@ def geary_khamis(
     
     # Define combo matrix used for isolating the singular matrices and
     # calculating the index values from the combo matrix `I_n - C + R`.
-    combo_matrix = np.identity(N) - C_matrix + R_matrix
+    combo_matrix = (np.identity(N) - C_matrix + R_matrix).fillna(0)
     
     if abs(np.linalg.det(combo_matrix)) <= 1e-7:
         # Fallback to iterative method for singular matrices.
