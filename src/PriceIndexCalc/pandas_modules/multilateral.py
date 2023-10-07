@@ -60,6 +60,7 @@ def compute_bilateral(
         price_col: str = 'price',
         quantity_col : str = 'quantity',
         product_id_col: str = 'id',
+        date_col: str = 'month'
 ) -> Tuple:
     """
     Compute bilateral indices for a given pair of periods.

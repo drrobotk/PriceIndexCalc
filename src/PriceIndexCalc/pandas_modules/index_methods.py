@@ -30,8 +30,8 @@ def bilateral_methods(
     df: pd.DataFrame,
     price_col: str = 'price',
     quantity_col: str = 'quantity',
-    date_col: str='month',
     product_id_col: str='id',
+    date_col: str='month',
     groups: Optional[Sequence[str]] = None,
     method: str = 'tornqvist',
     base_month: Union[int, str] = 1,
@@ -51,10 +51,10 @@ def bilateral_methods(
         User-defined name for the price column.
     quantity_col: str, defaults to 'quantity'
         User-defined name for the quantity column.
-    date_col: str, defaults to 'month'
-        User-defined name for the date column.
     product_id_col: str, defaults to 'id'
         User-defined name for the product ID column.
+    date_col: str, defaults to 'month'
+        User-defined name for the date column.
     groups: list of str, defaults to None
         The names of the groups columns.
     method: str, defaults to 'tornqvist'
@@ -92,7 +92,7 @@ def bilateral_methods(
     if method not in valid_bilateral_methods:
         raise ValueError("Invalid option, please select a valid bilateral method.")
 
-    args = (price_col, quantity_col, date_col, product_id_col)
+    args = (price_col, quantity_col, product_id_col, date_col)
 
     periods = sorted(df[date_col].unique())
     no_of_periods = len(periods)
