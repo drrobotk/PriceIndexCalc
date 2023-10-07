@@ -137,7 +137,7 @@ def bilateral_methods(
         period: df.loc[df[date_col] == period] 
         for period in periods
     }
-    with ThreadPoolExecutor(no_of_periods // 2) as executor:
+    with ThreadPoolExecutor(no_of_periods) as executor:
         futures = [
             executor.submit(
                 compute_bilateral, 
