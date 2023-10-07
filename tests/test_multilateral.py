@@ -96,10 +96,10 @@ def test_geks_tornqvist(large_input_df):
 
 
 
-# def test_geks_jevons(large_input_df):
-#     actual = multilateral_methods(large_input_df, method='geks', bilateral_method='jevons', groups=['group']).sort_values('index_value')['index_value'].to_list()
-#     expected = pd.read_csv('tests/test_data/large_output_geks_jevons_pure.csv').sort_values(by='index_value')['index_value'].to_list()
-#     assert_almost_equal(actual, expected, decimal=14)
+def test_geks_jevons(large_input_df):
+    actual = multilateral_methods(large_input_df, method='geks', bilateral_method='jevons', groups=['group']).sort_values('index_value')['index_value'].to_list()
+    expected = pd.read_csv('tests/test_data/large_output_geks_jevons_pure.csv').sort_values(by='index_value')['index_value'].to_list()
+    assert_almost_equal(actual, expected, decimal=14)
 
 # def test_geks_jevons_extension_movement(large_input_df):
 #     actual = multilateral_methods(large_input_df, method='geks', extension_method='movement', bilateral_method='jevons', groups=['group']).sort_values('index_value')['index_value'].to_list()
@@ -124,10 +124,10 @@ def test_geks_tornqvist(large_input_df):
 
 
 
-# def test_geks_fisher(large_input_df):
-#     actual = multilateral_methods(large_input_df, method='geks', bilateral_method='fisher', groups=['group']).sort_values('index_value')['index_value'].to_list()
-#     expected = pd.read_csv('tests/test_data/large_output_geks_fisher_pure.csv').sort_values(by='index_value')['index_value'].to_list()
-#     assert_almost_equal(actual, expected, decimal=14)
+def test_geks_fisher(large_input_df):
+    actual = multilateral_methods(large_input_df, method='geks', bilateral_method='fisher', groups=['group']).sort_values('index_value')['index_value'].to_list()
+    expected = pd.read_csv('tests/test_data/large_output_geks_fisher_pure.csv').sort_values(by='index_value')['index_value'].to_list()
+    assert_almost_equal(actual, expected, decimal=14)
 
 # def test_geks_fisher_extension_movement(large_input_df):
 #     actual = multilateral_methods(large_input_df, method='geks', extension_method='movement', bilateral_method='fisher', groups=['group']).sort_values('index_value')['index_value'].to_list()
