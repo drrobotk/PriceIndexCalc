@@ -16,13 +16,14 @@ and the following multilateral price index methods:
   and Time Dummy methods (TPD, TDH).
 """
 from typing import Sequence, Optional, Union
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 import seaborn as sns
 
 from .helpers import _weights_calc
 from .bilateral import *
-from .multilateral import *
+from .common import compute_bilateral
+from .multilateral import geary_khamis, geks, time_dummy, compute_bilateral
 
 __author__ = ['Dr. Usman Kayani']
 
@@ -133,56 +134,26 @@ def bilateral_methods(
 
     index_vals = np.zeros(no_of_periods)
 
-    if method != 'tpd':
-        # Obtain bilateral function for bilateral method.
-        func = globals()[method]
-
-    for i in range(no_of_periods):
-        # Get data for base and current period.
-        df_base = df_base_master
-        df_curr = df.loc[df[date_col] == periods[i]]
-
-        # Make sure the sample is matched for given periods.
-        df_base = df_base[df_base[product_id_col].isin(df_curr[product_id_col])]
-        df_curr = df_curr[df_curr[product_id_col].isin(df_base[product_id_col])]
-
-        if method == 'tpd':
-            # Use multilateral TPD method with two periods.
-            df_matched = (
-                pd.concat([df_base, df_curr])
-                .drop_duplicates()
+    df_by_period = {
+        period: df.loc[df[date_col] == period] 
+        for period in periods
+    }
+    with ThreadPoolExecutor(no_of_periods // 2) as executor:
+        futures = [
+            executor.submit(
+                compute_bilateral, 
+                df_by_period, 
+                periods, 
+                base_month-1, 
+                j, 
+                method, 
+                *args
             )
-            # Recalculate weights for matched df.
-            df_matched = _weights_calc(df_matched)
-            # Append values to upper triangular of matrix.
-            index_vals[i] = time_dummy(df_matched)[-1]
-        else:
-            # Find price and quantity vectors of base period and current period.
-            p_base = df_base[price_col].to_numpy()
-            p_curr = df_curr[price_col].to_numpy()
-            data = (p_base, p_curr)
-
-            # Get quantities for bilateral methods that use this information.
-            if method in {
-                'laspeyres', 'drobish', 'marshall_edgeworth',
-                'geom_laspeyres', 'tornqvist', 'fisher',
-                'walsh', 'sato_vartia', 'geary_khamis_b', 
-                'rothwell', 'lowe'
-            }:
-                q_base = df_base[quantity_col].to_numpy()
-                data += (q_base, )
-            if method in {
-                'paasche', 'drobish','palgrave',
-                'marshall_edgeworth', 'geom_paasche', 'tornqvist',
-                'fisher', 'walsh', 'sato_vartia',
-                'geary_khamis_b'
-            }:
-                q_curr = df_curr[quantity_col].to_numpy()
-                data += (q_curr, )
-
-            # Determine the bilaterals for each base and current period and
-            # append to upper tringular of matrix.
-            index_vals[i] = func(*data)
+            for j in range(no_of_periods)
+        ]
+        for future in as_completed(futures):
+            i, j, result  = future.result()
+            index_vals[j] = result
 
     output_df = (
         pd.DataFrame(
@@ -328,11 +299,11 @@ def multilateral_methods(
         index_vals = geary_khamis(df, *args)
     elif method == 'tpd':
         index_vals = time_dummy(df, *args, None, engine=td_engine)
-    elif method == 'tdh':
-        if not characteristics:
-            raise ValueError("Characteristics required for TDH.")
-        else:
-            index_vals = time_dummy(df, *args, characteristics, engine=td_engine)
+    # elif method == 'tdh':
+    #     if not characteristics:
+    #         raise ValueError("Characteristics required for TDH.")
+    #     else:
+    #         index_vals = time_dummy(df, *args, characteristics, engine=td_engine)
     output_df = (
         pd.DataFrame(
             index_vals,
