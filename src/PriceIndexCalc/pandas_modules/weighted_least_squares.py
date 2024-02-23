@@ -171,7 +171,8 @@ def _get_vars(
     df_dummy = pd.get_dummies(
         df,
         columns=[independent_vars[0], *categorical_vars],
-        drop_first=True
+        drop_first=True,
+        dtype=int,
     )
 
     # Create a column with all values equal to 1 for the constant term in the regression.
